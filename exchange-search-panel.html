@@ -1,0 +1,636 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../openable-panel-behavior/openable-panel-behavior.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../web-unzip/web-unzip.html">
+<link rel="import" href="../raml-main-entry-lookup/raml-main-entry-lookup.html">
+<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item-shared-styles.html">
+<link rel="import" href="exchange-search-grid-item.html">
+<link rel="import" href="exchange-search-list-item.html">
+
+<!--
+An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
+
+It handles queries to the exchange server, displays list of results, handles user query
+and downloads API data on user request.
+It dispatches `process-incoming-data` custom event when user data are ready.
+
+### Example
+```
+<exchange-search-panel on-process-incoming-data="_dataReady"></exchange-search-panel>
+```
+
+Note: This is very early version of the element and it most probably will change.
+However the genral logic will be the same for this element.
+
+### Styling
+`<exchange-search-panel>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--exchange-search-panel` | Mixin applied to the element | `{}`
+`--exchange-search-panel-header` | Mixin applied to the header section with title and the list control buttons | `{}`
+`--arc-font-headline` | Mixin applied to the title of the panel | `{}`
+`--exchange-search-panel-toggle-view-active-background-color` | Background color of the lost control buttons | `#00A1DF`
+`--exchange-search-panel-toggle-view-active-color` | Color of the lost control buttons | `#00A1DF`
+`--warning-primary-color` | Main color of the warning messages | `#FF7043`
+`--warning-contrast-color` | Contrast color for the warning color | `#fff`
+`--error-toast` | Mixin applied to the error toast | `{}`
+`--empty-info` | Mixin applied to the label rendered when no data is available. | `{}`
+`--exchange-search-panel-list` | Mixin applied to the list element | `{}`
+`--action-button` | Mixin applied to the "load more" button | `{}`
+`--action-button-hover` | Mixin applied to the "load more" button when hovered | `{}`
+
+@group UI Elements
+@element exchange-search-panel
+@demo demo/index.html
+-->
+<dom-module id="exchange-search-panel">
+  <template>
+    <style include="paper-item-shared-styles"></style>
+    <style>
+    :host {
+      display: block;
+      @apply --exchange-search-panel;
+
+      --paper-rating-icon: {
+        width: 20px;
+        height: 20px;
+      };
+    }
+
+    .header {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      @apply --exchange-search-panel-header;
+    }
+
+    h2 {
+      @apply --arc-font-headline;
+      @apply --layout-flex;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    paper-progress {
+      width: 100%;
+      @apply --exchange-search-panel-loader;
+    }
+
+    paper-icon-button {
+      border-radius: 50%;
+      min-width: 40px;
+      min-height: 40px;
+    }
+
+    paper-icon-button[active] {
+      background-color: var(--exchange-search-panel-toggle-view-active-background-color, #00A1DF);
+      color: var(--exchange-search-panel-toggle-view-active-color, #fff);
+    }
+
+    .error-toast {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+      @apply --error-toast;
+    }
+
+    .empty-info {
+      font-size: 16px;
+      @apply --empty-info;
+    }
+
+    .header-actions {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .search-bar {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .search-bar paper-input {
+      @apply --layout-flex;
+    }
+
+    .list {
+      @apply --layout-horizontal;
+      @apply --layout-wrap;
+      @apply --exchange-search-panel-list;
+    }
+
+    .list[data-list] {
+      @apply --layout-vertical;
+    }
+
+    exchange-search-grid-item {
+      width: calc(25% - 16px);
+      margin: 8px;
+    }
+
+    .paper-item {
+      cursor: pointer;
+    }
+
+    .action-button {
+      @apply --action-button;
+    }
+
+    .action-button:hover {
+      @apply --action-button-hover;
+    }
+
+    .load-more {
+      @apply --layout-vertical;
+      @apply --layout-center-center;
+      margin-top: 20px;
+    }
+    </style>
+    <div class="header">
+      <h2>Explore REST APIs</h2>
+      <div class="header-actions">
+        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listActive]]" on-tap="_enableGrid"></paper-icon-button>
+        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listActive]]" on-tap="_enableList"></paper-icon-button>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <paper-input type="search" value="{{query}}" label="Search for APIs in Anypoint Exchange" on-search="updateSearch"></paper-input>
+      <paper-button raised on-tap="updateSearch">Search</paper-button>
+    </div>
+
+    <template is="dom-if" if="[[querying]]">
+      <paper-progress indeterminate></paper-progress>
+    </template>
+    <template is="dom-if" if="[[dataUnavailable]]">
+      <p class="empty-info">Couldn't find requested API.</p>
+    </template>
+
+    <section class="list" data-list$="[[listActive]]">
+      <template is="dom-repeat" items="[[items]]" id="list">
+        <template is="dom-if" if="[[!listActive]]" restamp="true">
+          <exchange-search-grid-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-grid-item>
+        </template>
+        <template is="dom-if" if="[[listActive]]" restamp="true">
+          <exchange-search-list-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-list-item>
+        </template>
+      </template>
+    </section>
+    <template is="dom-if" if="[[renderLoadMore]]">
+      <div class="load-more">
+        <paper-button raised class="action-button" on-tap="queryCurrent">Load more</paper-button>
+      </div>
+    </template>
+
+    <paper-dialog id="fileSelectorDialog">
+      <h2>Select API main file</h2>
+      <paper-dialog-scrollable>
+        <paper-listbox>
+          <template is="dom-repeat" items="[[entryPoints]]">
+            <button class="paper-item" role="option" on-tap="_useEntryPoint">[[item.path]][[item.name]]</button>
+          </template>
+        </paper-listbox>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+      </div>
+    </paper-dialog>
+
+    <iron-ajax id="query" url="[[exchangeSearchUri]]" handle-as="json" on-response="_exchangeResponse" debounce-duration="300" params="[[queryParams]]"  on-error="_exchangeResponseError"></iron-ajax>
+    <iron-ajax id="download" handle-as="blob" on-response="_assetDownloaded" on-error="_assetDownloadError"></iron-ajax>
+    <paper-toast id="noRamlFile" text="The asset doesn't contain RAML file information." class="error-toast"></paper-toast>
+    <paper-toast id="queryError" text="Unable to query for more data. Check your internet connection." class="error-toast"></paper-toast>
+    <paper-toast id="downloadError" text="Unable to download the asset. Check your internet connection." class="error-toast"></paper-toast>
+    <paper-toast id="unzipError" text="Unable to unzip RAML data. The zip file might be corrupted." class="error-toast"></paper-toast>
+    <paper-toast text="Downloading API definitions..." opened="[[downloadingAsset]]" duration="0"></paper-toast>
+    <paper-toast text="Reading file contents..." opened="[[readingFile]]" duration="0"></paper-toast>
+
+    <web-unzip id="unzip" on-web-unzip-read="_fileUnzipped" on-error="_unzipError" auto-read flat-structure></web-unzip>
+    <raml-main-entry-lookup id="lookup" on-entry="_entryFound"></raml-main-entry-lookup>
+  </template>
+  <script>
+  Polymer({
+    is: 'exchange-search-panel',
+
+    behaviors: [
+      ArcBehaviors.OpenablePanelBehavior
+    ],
+
+    properties: {
+      /**
+       * Saved items restored from the datastore.
+       */
+      items: Array,
+      // True when the element is querying the database for the data.
+      querying: {
+        type: Boolean,
+        readOnly: true,
+        notify: true
+      },
+      // Computed value, true if the `items` property has values.
+      hasItems: {
+        type: Boolean,
+        value: false,
+        computed: '_computeHasItems(items.length)',
+        notify: true
+      },
+      /**
+       * Computed value. True if query ended and there's no results.
+       */
+      dataUnavailable: {
+        type: Boolean,
+        computed: '_computeDataUnavailable(hasItems, querying)'
+      },
+      // Search query for the list.
+      query: String,
+      // True if the Grid view is active
+      listActive: {
+        type: Boolean,
+        value: false
+      },
+      /**
+       * If true, the element will not produce a ripple effect when interacted
+       * with via the pointer.
+       */
+      noink: Boolean,
+      /**
+       * Rows offset in the Exchange's query.
+       */
+      exchangeOffset: {
+        type: Number,
+        value: 0
+      },
+      /**
+       * Limit of the results in single query to the Exchange's API.
+       */
+      exchangeLimit: {
+        type: Number,
+        value: 20
+      },
+      /**
+       * Exchange's asset type to search.
+       */
+      exchangeType: {
+        type: String,
+        value: 'rest-api',
+        readOnly: true
+      },
+      /**
+       * An URI to the endpoint with the search API.
+       */
+      exchangeSearchUri: {
+        type: String,
+        value: 'https://anypoint.mulesoft.com/exchange/api/v1/assets'
+      },
+      /**
+       * Computed value of query parameters to be sent to Exchange's API
+       */
+      queryParams: {
+        type: String,
+        computed: '_computeQueryParams(exchangeType, exchangeLimit, exchangeOffset, query)'
+      },
+      /**
+       * Scrolling target used to determine when authomatically download
+       * next results.
+       *
+       * By default it is `document.documentElement`
+       */
+      scrollTarget: {
+        type: Object,
+        value: function() {
+          // return document.documentElement;
+          return window;
+        }
+      },
+      /**
+       * Padding in pixels that will trigget query to the Exchange server
+       * when the user scrolls the list.
+       */
+      listOffsetTrigger: {
+        type: Number,
+        value: 120
+      },
+      /**
+       * Set when no more results are available for current offset - limit
+       * values.
+       */
+      noMoreResults: {
+        type: Boolean,
+        notify: true,
+        value: false
+      },
+      // True when downloaded zip is being processed.
+      readingFile: {
+        type: Boolean,
+        notify: true
+      },
+      // Will set to true when there's no entry point in the selected files.
+      noEntryPoint: {
+        type: Boolean,
+        notify: true
+      },
+      // Will set to true when there's there are miltiple entry points in the selected files.
+      multipleEntryPoints: {
+        type: Boolean,
+        notify: true
+      },
+      // List of detected entry points
+      entryPoints: {
+        type: Array,
+        notify: true
+      },
+      // True when the asset is being downloaded.
+      downloadingAsset: {
+        type: Boolean,
+        notify: true
+      },
+      // Computed value, if true then it renders "load more" button below the list
+      renderLoadMore: {
+        type: Boolean,
+        computed: '_computeRenderLoadMore(querying,noMoreResults)'
+      }
+    },
+
+    observers: [
+      '_scrollTargetChanged(scrollTarget)',
+      '_checkLoad(_isOpened)'
+    ],
+
+    _scrollTargetChanged: function(scrollTarget) {
+      if (this._oldScrollTarget) {
+        this.unlisten(this._oldScrollTarget, 'scroll', '_onScroll');
+      }
+      if (scrollTarget === document.documentElement) {
+        scrollTarget = window;
+      }
+      this._oldScrollTarget = scrollTarget;
+      this.listen(this._oldScrollTarget, 'scroll', '_onScroll');
+    },
+    /**
+     * Auto loads first page of results when the element has been opened.
+     * It only calls `queryCurrent` if the element is opened in the UI and
+     * the `items` array hasn't been set.
+     *
+     * @param {Boolean} isOpened The _isOpened propery value.
+     */
+    _checkLoad: function(isOpened) {
+      if (isOpened && !this.noMoreResults && !this.querying && !this.items) {
+        this.queryCurrent();
+      }
+    },
+
+    // Computes value for the `hasItems` property.
+    _computeHasItems: function(length) {
+      return !!(length);
+    },
+
+    _computeRenderLoadMore: function(querying, noMoreResults) {
+      return !querying && !noMoreResults;
+    },
+
+    reset: function() {
+      this.set('items', []);
+      this.set('exchangeOffset', 0);
+      this.noMoreResults = false;
+      this._setQuerying(false);
+    },
+
+    // Handler for grid view button click
+    _enableGrid: function() {
+      if (this.listActive) {
+        this.listActive = false;
+      }
+      var toggle = this.$$('[data-action="grid-enable"]');
+      if (!toggle.active) {
+        toggle.active = true;
+      }
+    },
+    // Handler for list view button click
+    _enableList: function() {
+      if (!this.listActive) {
+        this.listActive = true;
+      }
+      var toggle = this.$$('[data-action="list-enable"]');
+      if (!toggle.active) {
+        toggle.active = true;
+      }
+    },
+    /**
+     * Resets current list of results and makes a query to the Exchange server.
+     * It will use current value of search query (which might be empty) to
+     * search for an asset.
+     */
+    updateSearch: function() {
+      this.reset();
+      this.queryCurrent();
+    },
+
+    // Computes value for the `dataUnavailable` property.
+    _computeDataUnavailable: function(hasItems, querying) {
+      return !hasItems && !querying;
+    },
+    /**
+     * Makes a query to the exchange server for more data.
+     * It uses current `queryParams` to generate request.
+     */
+    queryCurrent: function() {
+      this._setQuerying(true);
+      this.$.query.generateRequest();
+    },
+
+    _exchangeResponse: function(e) {
+      var data = e.detail.response;
+      if (!data || !data.length) {
+        this.noMoreResults = true;
+        this._setQuerying(false);
+        return;
+      }
+      if (data.length < this.exchangeLimit) {
+        this.noMoreResults = true;
+      }
+      var items = this.items || [];
+      items = items.concat(data);
+      this.exchangeOffset += data.length;
+      this.set('items', items);
+      this._setQuerying(false);
+    },
+
+    _computeQueryParams(type, limit, offset, query) {
+      var params = {
+        type: type,
+        limit: limit,
+        offset: offset
+      };
+      if (query) {
+        params.search = query;
+      }
+      return params;
+    },
+
+    _onScroll: function() {
+      if (this.querying || this.noMoreResults) {
+        return;
+      }
+      var st = this.scrollTarget;
+      if (st === window) {
+        st = document.documentElement;
+      }
+      var padding = st.scrollHeight - (st.clientHeight + st.scrollTop);
+      if (padding <= this.listOffsetTrigger) {
+        this.queryCurrent();
+      }
+    },
+
+    _downloadItem: function(e) {
+      var item = e.model.get('item');
+      var file = item.files.find(i => i.classifier === 'fat-raml');
+      if (!file) {
+        file = item.files.find(i => i.classifier === 'raml');
+      }
+      if (!file || !file.externalLink) {
+        this.$.noRamlFile.opened = true;
+        return;
+      }
+      this.$.download.url = file.externalLink;
+      this.downloadingAsset = true;
+      this.$.download.generateRequest();
+    },
+
+    _assetDownloaded: function(e) {
+      this.downloadingAsset = false;
+      var data = e.detail.response;
+      this.set('readingFile', true);
+      this.$.unzip.file = [new Blob([data], {type: 'application/zip'})];
+    },
+
+    _fileUnzipped: function(e) {
+      this.set('readingFile', false);
+      if (e.detail.fileStructure.length === 1) {
+        this._processEntries(e.detail.fileStructure);
+        return;
+      }
+      this.fileStructure = e.detail.fileStructure;
+      this.$.lookup.files = e.detail.fileStructure;
+    },
+
+    /**
+     * Handler for `entry` custom event of raml-main-entry-lookup
+     * element.
+     */
+    _entryFound: function(e) {
+      var file = e.detail.entry;
+      if (!file) {
+        this.noEntryPoint = true;
+        return;
+      }
+      if (file instanceof Array) {
+        var exit = true;
+        // just try to find common file name
+        for (let i = 0, len = file.length; i < len; i += 1) {
+          if (file[i].name === 'api.raml') {
+            file = file[i];
+            exit = false;
+            break;
+          }
+        }
+        if (exit) {
+          this.multipleEntryPoints = true;
+          this.entryPoints = file;
+          this.$.fileSelectorDialog.opened = true;
+          return;
+        }
+      }
+      this._processRaml(file.entry);
+    },
+
+    // Dispatches `process-incoming-data` for RAML file(s).
+    _processRaml: function(file) {
+      var filesystem = this.fileStructure || this.$.lookup.files;
+      this.fire('process-incoming-data', {
+        file: file,
+        filesystem: filesystem,
+        type: 'raml'
+      }, {
+        cancelable: true
+      });
+    },
+
+    /**
+     * Processes recorded files entries.
+     * @param {Array} entries List of files from the drop action.
+     */
+    _processEntries: function(entries) {
+      this.noEntryPoint = false;
+      this.multipleEntryPoints = false;
+      this.entryPoints = undefined;
+      this.fileStructure = undefined;
+      if (entries[0].name && entries[0].name.indexOf('.raml') !== -1) {
+        this._processRaml(entries[0]);
+      } else {
+        this.$.noRamlFile.opened = true;
+      }
+    },
+
+    /**
+     * Handler for user entry point selection.
+     */
+    _useEntryPoint: function(e) {
+      var item = e.model.get('item');
+      this.multipleEntryPoints = false;
+      this.entryPoints = undefined;
+      this._processRaml(item.entry);
+      this.$.fileSelectorDialog.opened = false;
+    },
+
+    _exchangeResponseError: function() {
+      this.$.queryError.opened = true;
+      this._setQuerying(false);
+    },
+
+    _assetDownloadError: function() {
+      this.downloadingAsset = false;
+      this.$.downloadError.opened = true;
+    },
+
+    _unzipError: function() {
+      this.$.unzipError.opened = true;
+    }
+
+    /**
+     * Fired when RAML data were read and ready to be processed.
+     *
+     * Note, the event can be canceled.
+     *
+     * @event process-incoming-data
+     * @param {String} type Always `raml`.
+     * @param {?Array} filesystem Optional. If there was a list of files
+     * associated with the import then it contains list of the files.
+     * @param {Blob} file The main RAML file.
+     */
+  });
+  </script>
+</dom-module>

@@ -1,0 +1,124 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-rating/paper-rating.html">
+<link rel="import" href="exchange-search-item-behavior.html">
+<!--
+`<exchange-search-grid-item>` Displays a single grid item for Exchange
+search rersults panel.
+
+### Example
+```
+<exchange-search-grid-item item="{...}" on-download="..."></exchange-search-grid-item>
+```
+
+### Styling
+`<exchange-search-grid-item>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--exchange-search-grid-item` | Mixin applied to the element | `{}`
+`--exchange-search-grid-item-action-button` | Mixin applied to the visible accrion button | `{}`
+`--exchange-search-grid-item-card-background-color` | Background color of the card item | `#fff`
+`--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
+`--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
+
+@group UI Elements
+@element exchange-search-grid-item
+@demo demo/index.html
+-->
+<dom-module id="exchange-search-grid-item">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-font-body1;
+      color: rgba(0, 0, 0, 0.87);
+      @apply --exchange-search-grid-item;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 400;
+      padding: 0;
+      margin: 0;
+      margin-left: 8px;
+    }
+
+    .title {
+      @apply --layout-horizontal;
+      @apply --layout-start;
+      height: 40px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card {
+      @apply --shadow-elevation-4dp;
+      padding: 12px;
+      min-width: 140px;
+      background-color: var(--exchange-search-grid-item-card-background-color, #fff);
+    }
+
+    .api-icon {
+      width: 36px;
+      height: 36px;
+      color: #73cfee;
+    }
+
+    .open-button {
+      @apply --exchange-search-grid-item-action-button;
+    }
+
+    .open-button:hover {
+      @apply --exchange-search-grid-item-action-button-hover;
+    }
+
+    .creator {
+      color: rgba(0, 0, 0, 0.54);
+    }
+    </style>
+    <div class="card">
+      <div class="title">
+        <iron-icon icon="[[_computeIconIcon(item)]]" class="api-icon" src="[[_computeIconSrc(item)]]"></iron-icon>
+        <h3>[[item.name]]</h3>
+      </div>
+      <p class="creator">by [[item.organization.name]]</p>
+      <template is="dom-if" if="[[hasTags]]">
+        <p class="tags-line">
+          <span class="tag-label">Tags:</span>
+          <span class="tag-value">[[tags]]</span>
+        </p>
+      </template>
+      <div class="rating">
+        <paper-rating rating="[[item.rating]]" icon="arc:star" disabled title$="Api raiting: [[item.rating]]/5"></paper-rating>
+      </div>
+      <div class="actions">
+        <paper-button noink="[[noink]]" on-tap="requestDownload" class="open-button">Download</paper-button>
+      </div>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'exchange-search-grid-item',
+    behaviors: [ArcBehaviors.ExchangeSearchItemBehavior]
+  });
+  </script>
+</dom-module>
