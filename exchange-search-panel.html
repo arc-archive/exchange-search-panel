@@ -463,6 +463,7 @@ Custom property | Description | Default
     },
 
     _exchangeResponse: function(e) {
+      this.__retryTimeout = undefined;
       var data = e.detail.response;
       if (!data || !data.length) {
         this.noMoreResults = true;
@@ -607,8 +608,13 @@ Custom property | Description | Default
     },
 
     _exchangeResponseError: function() {
+      var timeout = this.__retryTimeout || 1000;
+      timeout *= 2;
+      this.__retryTimeout = timeout;
       this.$.queryError.opened = true;
-      this._setQuerying(false);
+      this.async(function() {
+        this._setQuerying(false);
+      }, timeout);
     },
 
     _assetDownloadError: function() {
