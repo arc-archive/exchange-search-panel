@@ -39,6 +39,12 @@ Custom property | Description | Default
 ### Events
 | Name | Description | Params |
 | --- | --- | --- |
+| oauth2-token-requested | Dispatched when the element or user request access token from the Exchange server. | state **String** -  |
+clientId **String** -  |
+redirectUrl **String** -  |
+type **String** - Always `implicit` |
+authorizationUrl **String** -  |
+interactive **String** - After loading the element it tries the non-interactive method of authorization. When auth button is clicked then this value is always `true`. |
 | process-incoming-data | Fired when RAML data were read and ready to be processed.  Note, the event can be canceled. | type **String** - Always `raml`. |
 filesystem **?Array** - Optional. If there was a list of files associated with the import then it contains list of the files. |
 file **Blob** - The main RAML file. |

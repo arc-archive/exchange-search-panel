@@ -22,6 +22,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
 
   <link rel="import" href="../exchange-search-panel.html">
+  <link rel="import" href="../../oauth-authorization/oauth2-authorization.html">
+
 
   <style is="custom-style" include="demo-pages-shared-styles">
   :root {
@@ -50,11 +52,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </head>
 <body unresolved>
   <template is="dom-bind" id="app">
-    <exchange-search-panel></exchange-search-panel>
+    <exchange-search-panel allow-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]"></exchange-search-panel>
+    <oauth2-authorization></oauth2-authorization>
   </template>
   <script>
   (function(scope) {
     scope.opened = true;
+    // scope.redirectUrl = location.href.replace('/exchange-search-panel/demo/index.html',
+    //           '/oauth-authorization/oauth-popup.html');
+    scope.redirectUrl = 'https://auth.advancedrestclient.com/oauth-popup.html';
+    scope.clientId = '59KaqF90hLgZMJec';
   })(document.getElementById('app'));
   </script>
 </body>

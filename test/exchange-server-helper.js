@@ -1,6 +1,6 @@
 /* global sinon, chance */
 
-var ExchangeServer = {
+const ExchangeServer = {
   createServer: function() {
     this.srv = sinon.fakeServer.create({
       autoRespond: true
@@ -14,10 +14,10 @@ var ExchangeServer = {
   },
 
   mockList: function() {
-    var url = /^https:\/\/anypoint\.mulesoft\.com\/exchange\/api\/v1\/assets\?*/;
+    let url = /^https:\/\/anypoint\.mulesoft\.com\/exchange\/api\/v1\/assets\?*/;
     this.srv.respondWith('GET', url, function(request) {
-      var result = [];
-      for (var i = 0; i < 20; i++) {
+      let result = [];
+      for (let i = 0; i < 20; i++) {
         result.push(ExchangeServer.createListObject());
       }
       request.respond(200, {}, JSON.stringify(result));
@@ -25,7 +25,7 @@ var ExchangeServer = {
   },
 
   mockAssetDownload: function() {
-    var url = 'http://fake-download-asset.com';
+    let url = 'http://fake-download-asset.com';
     this.srv.respondWith('GET', url, function(xhr) {
       xhr.respond(200, {
         'Content-Type': 'application/xip'
@@ -34,7 +34,7 @@ var ExchangeServer = {
   },
 
   createListObject: function() {
-    var obj = {
+    let obj = {
       name: chance.string(),
       tags: [],
       rating: chance.integer({min: 0, max: 5}),
@@ -46,7 +46,7 @@ var ExchangeServer = {
         externalLink: 'http://fake-download-asset.com'
       }]
     };
-    for (var i = 0; i < chance.integer({min: 0, max: 10}); i++) {
+    for (let i = 0; i < chance.integer({min: 0, max: 10}); i++) {
       obj.tags.push({
         value: chance.string()
       });

@@ -29,6 +29,7 @@ the License.
 <link rel="import" href="../paper-item/paper-item-shared-styles.html">
 <link rel="import" href="exchange-search-grid-item.html">
 <link rel="import" href="exchange-search-list-item.html">
+<link rel="import" href="exchange-icons.html">
 
 <!--
 An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
@@ -169,10 +170,25 @@ Custom property | Description | Default
       @apply --layout-center-center;
       margin-top: 20px;
     }
+
+    .auth-button {
+      background-color: #00a2df;
+      color: #fff;
+    }
+
+    .exchange-icon {
+      margin-right: 8px;
+    }
     </style>
     <div class="header">
       <h2>Explore REST APIs</h2>
       <div class="header-actions">
+        <template is="dom-if" if="[[allowAuth]]">
+          <paper-button  on-tap="authorize" class="auth-button" hidden$="[[isAuthorized]]">
+            <iron-icon icon="exchange:exchange" class="exchange-icon"></iron-icon>
+            Log in with Exchange
+          </paper-button>
+        </template>
         <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listActive]]" on-tap="_enableGrid"></paper-icon-button>
         <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listActive]]" on-tap="_enableList"></paper-icon-button>
       </div>
@@ -219,16 +235,16 @@ Custom property | Description | Default
         <paper-button dialog-dismiss>Cancel</paper-button>
       </div>
     </paper-dialog>
-
     <iron-ajax id="query" url="[[exchangeSearchUri]]" handle-as="json" on-response="_exchangeResponse" debounce-duration="300" params="[[queryParams]]"  on-error="_exchangeResponseError"></iron-ajax>
     <iron-ajax id="download" handle-as="blob" on-response="_assetDownloaded" on-error="_assetDownloadError"></iron-ajax>
     <paper-toast id="noRamlFile" text="The asset doesn't contain RAML file information." class="error-toast"></paper-toast>
     <paper-toast id="queryError" text="Unable to query for more data. Check your internet connection." class="error-toast"></paper-toast>
+    <paper-toast id="tokenExpired" text="You are logged out from the Exchange. Log in and try again." class="error-toast"></paper-toast>
     <paper-toast id="downloadError" text="Unable to download the asset. Check your internet connection." class="error-toast"></paper-toast>
     <paper-toast id="unzipError" text="Unable to unzip RAML data. The zip file might be corrupted." class="error-toast"></paper-toast>
     <paper-toast text="Downloading API definitions..." opened="[[downloadingAsset]]" duration="0"></paper-toast>
     <paper-toast text="Reading file contents..." opened="[[readingFile]]" duration="0"></paper-toast>
-
+    <paper-toast id="errorToast" class="error-toast"></paper-toast>
     <web-unzip id="unzip" on-web-unzip-read="_fileUnzipped" on-error="_unzipError" auto-read flat-structure></web-unzip>
     <raml-main-entry-lookup id="lookup" on-entry="_entryFound"></raml-main-entry-lookup>
   </template>
@@ -372,6 +388,53 @@ Custom property | Description | Default
       renderLoadMore: {
         type: Boolean,
         computed: '_computeRenderLoadMore(querying,noMoreResults)'
+      },
+      /**
+       * If true it renders authorize button.
+       * Note that the hosting application has to handle `oauth2-token-requested`
+       * custom event.
+       * See `oauth-authorization/oauth2-authorization.html` element for
+       * more info.
+       */
+      allowAuth: {
+        type: Boolean,
+        observer: '_allowAuthChanged'
+      },
+      /**
+       * OAuth2 configuration for the Exchange.
+       */
+      oauth2Config: {
+        type: Object,
+        value: function() {
+          return {
+            type: 'implicit',
+            authorizationUrl: 'https://anypoint.mulesoft.com/accounts/oauth2/authorize'
+          };
+        }
+      },
+      /**
+       * The `redirect_uri` parameter of the OAuth2 request.
+       * It must be set when `allowAuth` is true or otherwise it will throw an
+       * error when trying to request the toekn.
+       */
+      exchangeRedirectUri: String,
+      /**
+       * Registered within the exchange client id for OAuth2 calls.
+       * It must be set when `allowAuth` is true or otherwise it will throw an
+       * error when trying to request the toekn.
+       */
+      exchangeClientId: String,
+      /**
+       * User access token to authorize the requests in the exchange
+       */
+      accessToken: {
+        type: String,
+        observer: '_accessTokenChenged'
+      },
+      // Computed value, true when access token is set.
+      isAuthorized: {
+        type: Boolean,
+        readOnly: true
       }
     },
 
@@ -379,6 +442,12 @@ Custom property | Description | Default
       '_scrollTargetChanged(scrollTarget)',
       '_checkLoad(_isOpened)'
     ],
+
+    ready: function() {
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this._sendAuthorize(false);
+      });
+    },
 
     _scrollTargetChanged: function(scrollTarget) {
       if (this._oldScrollTarget) {
@@ -463,6 +532,7 @@ Custom property | Description | Default
     },
 
     _exchangeResponse: function(e) {
+      this.__retryTimeout = undefined;
       var data = e.detail.response;
       if (!data || !data.length) {
         this.noMoreResults = true;
@@ -606,9 +676,20 @@ Custom property | Description | Default
       this.$.fileSelectorDialog.opened = false;
     },
 
-    _exchangeResponseError: function() {
+    _exchangeResponseError: function(e) {
+      if (e.detail.request.status === 401 && this.isAuthorized) {
+        // token expored
+        this.accessToken = undefined;
+        this.$.tokenExpired.opened = true;
+        return;
+      }
+      var timeout = this.__retryTimeout || 1000;
+      timeout *= 2;
+      this.__retryTimeout = timeout;
       this.$.queryError.opened = true;
-      this._setQuerying(false);
+      this.async(function() {
+        this._setQuerying(false);
+      }, timeout);
     },
 
     _assetDownloadError: function() {
@@ -618,8 +699,112 @@ Custom property | Description | Default
 
     _unzipError: function() {
       this.$.unzipError.opened = true;
-    }
+    },
+    /**
+     * Dispatches `oauth2-token-requested` custom event to request OAuth2 token.
+     */
+    authorize: function() {
+      this._sendAuthorize(true);
+    },
+    /**
+     * Sends `oauth2-token-requested` custom event to authorize with the
+     * Exchange server.
+     *
+     * @param {Boolean} interavtive If `false` then it performs non-interactive
+     * authorization in the background.
+     */
+    _sendAuthorize: function(interavtive) {
+      if (!this.allowAuth) {
+        return;
+      }
+      if (!this.exchangeClientId) {
+        throw new Error('Missing Exchange client ID.');
+      }
+      if (!this.exchangeRedirectUri) {
+        throw new Error('Missing Exchange redirect URI.');
+      }
+      var detail = Object.assign({}, this.oauth2Config);
+      this._lastState = this.generateState();
+      detail.state = this._lastState;
+      detail.clientId = this.exchangeClientId;
+      detail.redirectUrl = this.exchangeRedirectUri;
+      detail.interactive = interavtive;
+      this.fire('oauth2-token-requested', detail);
+    },
+    /**
+     * Generates `state` parameter for the OAuth2 call.
+     *
+     * @return {String} Generated state string.
+     */
+    generateState: function() {
+      let text = '';
+      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      for (let i = 0; i < 6; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+      return text;
+    },
 
+    _allowAuthChanged: function(state) {
+      if (state) {
+        this._listenOauth();
+      } else {
+        this._unlistenOauth();
+      }
+    },
+
+    _listenOauth: function() {
+      this.listen(window, 'oauth2-error', '_oauth2ErrorHandler');
+      this.listen(window, 'oauth2-token-response', '_oauth2TokenHandler');
+    },
+
+    _unlistenOauth: function() {
+      this.unlisten(window, 'oauth2-error', '_oauth2ErrorHandler');
+      this.unlisten(window, 'oauth2-token-response', '_oauth2TokenHandler');
+    },
+
+    _oauth2ErrorHandler: function(e) {
+      if (this._lastState !== e.detail.state) {
+        return;
+      }
+      var message = e.detail.message;
+      this.$.errorToast.text = message;
+      this.$.errorToast.opened = true;
+    },
+
+    _oauth2TokenHandler: function(e) {
+      var info = e.detail;
+      if (!info) {
+        return;
+      }
+      if (this._lastState !== e.detail.state) {
+        return;
+      }
+      if (info.interactive === false && info.code && !info.accessToken) {
+        return;
+      }
+      this.accessToken = info.accessToken;
+    },
+
+    _accessTokenChenged: function(token) {
+      if (!token) {
+        this._setIsAuthorized(false);
+      } else {
+        this._setIsAuthorized(true);
+      }
+      this._setupAuthHeaders(token);
+      if (this._isOpened) {
+        this.updateSearch();
+      }
+    },
+
+    _setupAuthHeaders: function(token) {
+      var headers = {};
+      if (token) {
+        headers.authorization = 'Bearer ' + token;
+      }
+      this.$.query.headers = headers;
+    }
     /**
      * Fired when RAML data were read and ready to be processed.
      *
@@ -630,6 +815,20 @@ Custom property | Description | Default
      * @param {?Array} filesystem Optional. If there was a list of files
      * associated with the import then it contains list of the files.
      * @param {Blob} file The main RAML file.
+     */
+    /**
+     * Dispatched when the element or user request access token from the Exchange
+     * server.
+     *
+     * @event oauth2-token-requested
+     * @param {String} state
+     * @param {String} clientId
+     * @param {String} redirectUrl
+     * @param {String} type Always `implicit`
+     * @param {String} authorizationUrl
+     * @param {String} interactive After loading the element it tries the
+     * non-interactive method of authorization. When auth button is clicked
+     * then this value is always `true`.
      */
   });
   </script>
