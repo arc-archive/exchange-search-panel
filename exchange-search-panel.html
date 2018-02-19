@@ -207,8 +207,9 @@ Custom property | Description | Default
     </div>
 
     <div class="search-bar">
-      <paper-input type="search" value="{{query}}" label="Search for APIs in Anypoint Exchange" on-search="updateSearch"></paper-input>
-      <paper-button raised on-tap="updateSearch">Search</paper-button>
+      <paper-input type="search" value="{{query}}" label="Search for APIs in Anypoint Exchange" on-keydown="_searchKeydown">
+        <paper-icon-button title="Search" suffix icon="arc:search" on-tap="updateSearch"></paper-icon-button>
+      </paper-input>
     </div>
     <template is="dom-if" if="[[!authInitialized]]">
       <div class="connecting-info">
@@ -533,6 +534,13 @@ Custom property | Description | Default
     updateSearch: function() {
       this.reset();
       this.queryCurrent();
+    },
+
+    _searchKeydown: function(e) {
+      if (e.which === 13 || e.keyCode === 13) {
+        e.preventDefault();
+        this.updateSearch();
+      }
     },
 
     // Computes value for the `dataUnavailable` property.
