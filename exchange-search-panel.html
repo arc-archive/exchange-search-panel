@@ -328,7 +328,7 @@ Custom property | Description | Default
       /**
        * Exchange's asset type to search.
        */
-      exchangeType: {
+      assetType: {
         type: String,
         value: 'rest-api',
         readOnly: true
@@ -345,7 +345,7 @@ Custom property | Description | Default
        */
       queryParams: {
         type: String,
-        computed: '_computeQueryParams(exchangeType, exchangeLimit, exchangeOffset, query)'
+        computed: '_computeQueryParams(assetType, exchangeLimit, exchangeOffset, query)'
       },
       /**
        * Scrolling target used to determine when authomatically download
@@ -576,7 +576,7 @@ Custom property | Description | Default
 
     _computeQueryParams(type, limit, offset, query) {
       var params = {
-        type: type,
+        type: this._getAssetTypes(type),
         limit: limit,
         offset: offset
       };
@@ -584,6 +584,21 @@ Custom property | Description | Default
         params.search = query;
       }
       return params;
+    },
+
+    _getAssetTypes: function(type) {
+      if (!type) {
+        return [];
+      }
+      if (type instanceof Array) {
+        return type;
+      }
+      if (type.indexOf(',') !== -1) {
+        type = type.split(',').map(function(item) {
+          return item.trim();
+        });
+      }
+      return type;
     },
 
     _onScroll: function() {

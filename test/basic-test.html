@@ -94,7 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         test('queryParams is computed', function() {
           var p = element.queryParams;
           assert.typeOf(p, 'object');
-          assert.equal(p.type, element.exchangeType, 'type is set');
+          assert.equal(p.type, element.assetType, 'type is set');
           assert.equal(p.limit, element.exchangeLimit, 'limit is set');
           assert.equal(p.offset, element.exchangeOffset, 'offset is set');
           assert.isUndefined(p.search, 'search is undefined');
@@ -104,7 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           element.query = 'test';
           var p = element.queryParams;
           assert.typeOf(p, 'object');
-          assert.equal(p.type, element.exchangeType, 'type is set');
+          assert.equal(p.type, element.assetType, 'type is set');
           assert.equal(p.limit, element.exchangeLimit, 'limit is set');
           assert.equal(p.offset, element.exchangeOffset, 'offset is set');
           assert.equal(p.search, element.query, 'search is set');
