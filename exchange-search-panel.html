@@ -27,9 +27,9 @@ the License.
 <link rel="import" href="../paper-dialog/paper-dialog.html">
 <link rel="import" href="../paper-listbox/paper-listbox.html">
 <link rel="import" href="../paper-item/paper-item-shared-styles.html">
+<link rel="import" href="../anypoint-signin/anypoint-signin.html">
 <link rel="import" href="exchange-search-grid-item.html">
 <link rel="import" href="exchange-search-list-item.html">
-<link rel="import" href="exchange-icons.html">
 
 <!--
 An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
@@ -172,8 +172,7 @@ Custom property | Description | Default
     }
 
     .auth-button {
-      background-color: #00a2df;
-      color: #fff;
+      margin-right: 8px;
     }
 
     .exchange-icon {
@@ -184,10 +183,15 @@ Custom property | Description | Default
       <h2>Explore REST APIs</h2>
       <div class="header-actions">
         <template is="dom-if" if="[[allowAuth]]">
-          <paper-button  on-tap="authorize" class="auth-button" hidden$="[[isAuthorized]]">
-            <iron-icon icon="exchange:exchange" class="exchange-icon"></iron-icon>
-            Log in with Exchange
-          </paper-button>
+          <anypoint-signin
+            class="auth-button"
+            redirect-uri="[[exchangeRedirectUri]]"
+            client-id="[[exchangeClientId]]"
+            signed-in="{{signedIn}}"
+            access-token="{{accessToken}}"
+            force-oauth-events="[[forceOauthEvents]]"
+            width="wide"
+            theme="dark"></anypoint-signin>
         </template>
         <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listActive]]" on-tap="_enableGrid"></paper-icon-button>
         <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listActive]]" on-tap="_enableList"></paper-icon-button>
@@ -401,18 +405,6 @@ Custom property | Description | Default
         observer: '_allowAuthChanged'
       },
       /**
-       * OAuth2 configuration for the Exchange.
-       */
-      oauth2Config: {
-        type: Object,
-        value: function() {
-          return {
-            type: 'implicit',
-            authorizationUrl: 'https://anypoint.mulesoft.com/accounts/oauth2/authorize'
-          };
-        }
-      },
-      /**
        * The `redirect_uri` parameter of the OAuth2 request.
        * It must be set when `allowAuth` is true or otherwise it will throw an
        * error when trying to request the toekn.
@@ -432,9 +424,17 @@ Custom property | Description | Default
         observer: '_accessTokenChenged'
       },
       // Computed value, true when access token is set.
-      isAuthorized: {
+      signedIn: Boolean,
+      /**
+       * Forces `anypoint-signin` element to use ARC's OAuth events.
+       */
+      forceOauthEvents: Boolean,
+      /**
+       * Flag indicating the authorization process has been initialized
+       */
+      authInitialized: {
         type: Boolean,
-        readOnly: true
+        notify: true
       }
     },
 
@@ -444,9 +444,12 @@ Custom property | Description | Default
     ],
 
     ready: function() {
-      Polymer.RenderStatus.afterNextRender(this, function() {
-        this._sendAuthorize(false);
-      });
+      if (!this.allowAuth) {
+        this.authInitialized = true;
+        if (this._isOpened) {
+          this.updateSearch();
+        }
+      }
     },
 
     _scrollTargetChanged: function(scrollTarget) {
@@ -467,7 +470,7 @@ Custom property | Description | Default
      * @param {Boolean} isOpened The _isOpened propery value.
      */
     _checkLoad: function(isOpened) {
-      if (isOpened && !this.noMoreResults && !this.querying && !this.items) {
+      if (isOpened && this.authInitialized && !this.noMoreResults && !this.querying && !this.items) {
         this.queryCurrent();
       }
     },
@@ -677,7 +680,7 @@ Custom property | Description | Default
     },
 
     _exchangeResponseError: function(e) {
-      if (e.detail.request.status === 401 && this.isAuthorized) {
+      if (e.detail.request.status === 401 && this.signedIn) {
         // token expored
         this.accessToken = undefined;
         this.$.tokenExpired.opened = true;
@@ -700,50 +703,6 @@ Custom property | Description | Default
     _unzipError: function() {
       this.$.unzipError.opened = true;
     },
-    /**
-     * Dispatches `oauth2-token-requested` custom event to request OAuth2 token.
-     */
-    authorize: function() {
-      this._sendAuthorize(true);
-    },
-    /**
-     * Sends `oauth2-token-requested` custom event to authorize with the
-     * Exchange server.
-     *
-     * @param {Boolean} interavtive If `false` then it performs non-interactive
-     * authorization in the background.
-     */
-    _sendAuthorize: function(interavtive) {
-      if (!this.allowAuth) {
-        return;
-      }
-      if (!this.exchangeClientId) {
-        throw new Error('Missing Exchange client ID.');
-      }
-      if (!this.exchangeRedirectUri) {
-        throw new Error('Missing Exchange redirect URI.');
-      }
-      var detail = Object.assign({}, this.oauth2Config);
-      this._lastState = this.generateState();
-      detail.state = this._lastState;
-      detail.clientId = this.exchangeClientId;
-      detail.redirectUrl = this.exchangeRedirectUri;
-      detail.interactive = interavtive;
-      this.fire('oauth2-token-requested', detail);
-    },
-    /**
-     * Generates `state` parameter for the OAuth2 call.
-     *
-     * @return {String} Generated state string.
-     */
-    generateState: function() {
-      let text = '';
-      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      for (let i = 0; i < 6; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-      }
-      return text;
-    },
 
     _allowAuthChanged: function(state) {
       if (state) {
@@ -754,48 +713,49 @@ Custom property | Description | Default
     },
 
     _listenOauth: function() {
-      this.listen(window, 'oauth2-error', '_oauth2ErrorHandler');
-      this.listen(window, 'oauth2-token-response', '_oauth2TokenHandler');
+      this.listen(this, 'anypoint-signin-aware-error', '_oauth2ErrorHandler');
+      this.listen(this, 'anypoint-signin-aware-signed-out', '_oauth2SignedOut');
+      this.listen(this, 'anypoint-signin-aware-success', '_oauth2SignedIn');
     },
 
     _unlistenOauth: function() {
-      this.unlisten(window, 'oauth2-error', '_oauth2ErrorHandler');
-      this.unlisten(window, 'oauth2-token-response', '_oauth2TokenHandler');
+      this.unlisten(this, 'anypoint-signin-aware-error', '_oauth2ErrorHandler');
+      this.unlisten(this, 'anypoint-signin-aware-signed-out', '_oauth2SignedOut');
+      this.unlisten(this, 'anypoint-signin-aware-success', '_oauth2SignedIn');
     },
 
     _oauth2ErrorHandler: function(e) {
-      if (this._lastState !== e.detail.state) {
-        return;
-      }
       var message = e.detail.message;
       this.$.errorToast.text = message;
       this.$.errorToast.opened = true;
+      if (!this.authInitialized) {
+        this.authInitialized = true;
+      }
     },
 
-    _oauth2TokenHandler: function(e) {
-      var info = e.detail;
-      if (!info) {
-        return;
+    _oauth2SignedOut: function() {
+      if (!this.authInitialized) {
+        this.authInitialized = true;
       }
-      if (this._lastState !== e.detail.state) {
-        return;
-      }
-      if (info.interactive === false && info.code && !info.accessToken) {
-        return;
-      }
-      this.accessToken = info.accessToken;
-    },
-
-    _accessTokenChenged: function(token) {
-      if (!token) {
-        this._setIsAuthorized(false);
-      } else {
-        this._setIsAuthorized(true);
-      }
-      this._setupAuthHeaders(token);
       if (this._isOpened) {
         this.updateSearch();
       }
+    },
+
+    _oauth2SignedIn: function() {
+      if (!this.authInitialized) {
+        this.authInitialized = true;
+      }
+      if (this._isOpened) {
+        this.updateSearch();
+      }
+    },
+
+    _accessTokenChenged: function(token, old) {
+      if (!old && !token) {
+        return;
+      }
+      this._setupAuthHeaders(token);
     },
 
     _setupAuthHeaders: function(token) {
