@@ -88,7 +88,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
 
         test('List view is false by default', function() {
-          assert.isFalse(element.listActive);
+          assert.isFalse(element.listView);
         });
 
         test('queryParams is computed', function() {
@@ -200,9 +200,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           });
         });
 
-        test('Sets listActive to true', function() {
+        test('Sets listView to true', function() {
           element._enableList();
-          assert.isTrue(element.listActive);
+          assert.isTrue(element.listView);
         });
 
         test('Renders list items', function() {
@@ -223,7 +223,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var element;
         setup(function(done) {
           element = fixture('basic');
-          element.listActive = true;
+          element.listView = true;
           element.addEventListener('querying-changed', function clb(e) {
             if (e.detail.value === false) {
               element.removeEventListener('querying-changed', clb);
@@ -233,9 +233,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           });
         });
 
-        test('Sets listActive to false', function() {
+        test('Sets listView to false', function() {
           element._enableGrid();
-          assert.isFalse(element.listActive);
+          assert.isFalse(element.listView);
         });
 
         test('Renders grid items', function() {

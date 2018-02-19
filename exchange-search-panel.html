@@ -201,8 +201,8 @@ Custom property | Description | Default
             width="wide"
             theme="dark"></anypoint-signin>
         </template>
-        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listActive]]" on-tap="_enableGrid"></paper-icon-button>
-        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listActive]]" on-tap="_enableList"></paper-icon-button>
+        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listView]]" on-tap="_enableGrid"></paper-icon-button>
+        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listView]]" on-tap="_enableList"></paper-icon-button>
       </div>
     </div>
 
@@ -223,12 +223,12 @@ Custom property | Description | Default
       <p class="empty-info">Couldn't find requested API.</p>
     </template>
 
-    <section class="list" data-list$="[[listActive]]">
+    <section class="list" data-list$="[[listView]]">
       <template is="dom-repeat" items="[[items]]" id="list">
-        <template is="dom-if" if="[[!listActive]]" restamp="true">
+        <template is="dom-if" if="[[!listView]]" restamp="true">
           <exchange-search-grid-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-grid-item>
         </template>
-        <template is="dom-if" if="[[listActive]]" restamp="true">
+        <template is="dom-if" if="[[listView]]" restamp="true">
           <exchange-search-list-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-list-item>
         </template>
       </template>
@@ -301,7 +301,7 @@ Custom property | Description | Default
       // Search query for the list.
       query: String,
       // True if the Grid view is active
-      listActive: {
+      listView: {
         type: Boolean,
         value: false
       },
@@ -507,8 +507,8 @@ Custom property | Description | Default
 
     // Handler for grid view button click
     _enableGrid: function() {
-      if (this.listActive) {
-        this.listActive = false;
+      if (this.listView) {
+        this.listView = false;
       }
       var toggle = this.$$('[data-action="grid-enable"]');
       if (!toggle.active) {
@@ -517,8 +517,8 @@ Custom property | Description | Default
     },
     // Handler for list view button click
     _enableList: function() {
-      if (!this.listActive) {
-        this.listActive = true;
+      if (!this.listView) {
+        this.listView = true;
       }
       var toggle = this.$$('[data-action="list-enable"]');
       if (!toggle.active) {
