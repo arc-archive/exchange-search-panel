@@ -178,12 +178,20 @@ Custom property | Description | Default
     .exchange-icon {
       margin-right: 8px;
     }
+
+    .connecting-info {
+      width: 320px;
+      margin: 0 auto;
+      @apply --arc-font-body1;
+      text-align: center;
+    }
     </style>
     <div class="header">
       <h2>Explore REST APIs</h2>
       <div class="header-actions">
         <template is="dom-if" if="[[allowAuth]]">
           <anypoint-signin
+            disabled$="[[!authInitialized]]"
             class="auth-button"
             redirect-uri="[[exchangeRedirectUri]]"
             client-id="[[exchangeClientId]]"
@@ -202,7 +210,12 @@ Custom property | Description | Default
       <paper-input type="search" value="{{query}}" label="Search for APIs in Anypoint Exchange" on-search="updateSearch"></paper-input>
       <paper-button raised on-tap="updateSearch">Search</paper-button>
     </div>
-
+    <template is="dom-if" if="[[!authInitialized]]">
+      <div class="connecting-info">
+        <p>Connecting to Anypoint Exchange</p>
+        <paper-progress indeterminate></paper-progress>
+      </div>
+    </template>
     <template is="dom-if" if="[[querying]]">
       <paper-progress indeterminate></paper-progress>
     </template>
@@ -434,7 +447,8 @@ Custom property | Description | Default
        */
       authInitialized: {
         type: Boolean,
-        notify: true
+        notify: true,
+        value: false
       }
     },
 
