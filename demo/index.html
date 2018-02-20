@@ -20,9 +20,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
   <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
-
+  <link rel="import" href="../../paper-toast/paper-toast.html">
   <link rel="import" href="../exchange-search-panel.html">
-  <link rel="import" href="../../oauth-authorization/oauth2-authorization.html">
 
 
   <style is="custom-style" include="demo-pages-shared-styles">
@@ -52,8 +51,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 </head>
 <body unresolved>
   <template is="dom-bind" id="app">
-    <exchange-search-panel allow-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]"></exchange-search-panel>
-    <oauth2-authorization></oauth2-authorization>
+    <exchange-search-panel allow-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" on-process-incoming-data="_onData"></exchange-search-panel>
+    <paper-toast text="Binary data received from the element." opened="{{receivedOpened}}"></paper-toast>
   </template>
   <script>
   (function(scope) {
@@ -62,6 +61,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     //           '/oauth-authorization/oauth-popup.html');
     scope.redirectUrl = 'https://auth.advancedrestclient.com/oauth-popup.html';
     scope.clientId = '59KaqF90hLgZMJec';
+    scope._onData = function() {
+      scope.receivedOpened = true;
+    };
+
   })(document.getElementById('app'));
   </script>
 </body>

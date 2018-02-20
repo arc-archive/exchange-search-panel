@@ -28,7 +28,7 @@ const ExchangeServer = {
     let url = 'http://fake-download-asset.com';
     this.srv.respondWith('GET', url, function(xhr) {
       xhr.respond(200, {
-        'Content-Type': 'application/xip'
+        'Content-Type': 'application/zip'
       }, 'test');
     });
   },

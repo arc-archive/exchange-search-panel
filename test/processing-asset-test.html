@@ -61,6 +61,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var argument;
         setup(function(done) {
           element = fixture('basic');
+          element._assetDownloaded = function() {};
           element.addEventListener('querying-changed', function clb(e) {
             if (e.detail.value === false) {
               element.removeEventListener('querying-changed', clb);

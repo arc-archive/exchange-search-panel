@@ -27,9 +27,9 @@ the License.
 <link rel="import" href="../paper-dialog/paper-dialog.html">
 <link rel="import" href="../paper-listbox/paper-listbox.html">
 <link rel="import" href="../paper-item/paper-item-shared-styles.html">
+<link rel="import" href="../anypoint-signin/anypoint-signin.html">
 <link rel="import" href="exchange-search-grid-item.html">
 <link rel="import" href="exchange-search-list-item.html">
-<link rel="import" href="exchange-icons.html">
 
 <!--
 An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
@@ -172,33 +172,51 @@ Custom property | Description | Default
     }
 
     .auth-button {
-      background-color: #00a2df;
-      color: #fff;
+      margin-right: 8px;
     }
 
     .exchange-icon {
       margin-right: 8px;
+    }
+
+    .connecting-info {
+      width: 320px;
+      margin: 0 auto;
+      @apply --arc-font-body1;
+      text-align: center;
     }
     </style>
     <div class="header">
       <h2>Explore REST APIs</h2>
       <div class="header-actions">
         <template is="dom-if" if="[[allowAuth]]">
-          <paper-button  on-tap="authorize" class="auth-button" hidden$="[[isAuthorized]]">
-            <iron-icon icon="exchange:exchange" class="exchange-icon"></iron-icon>
-            Log in with Exchange
-          </paper-button>
+          <anypoint-signin
+            disabled$="[[!authInitialized]]"
+            class="auth-button"
+            redirect-uri="[[exchangeRedirectUri]]"
+            client-id="[[exchangeClientId]]"
+            signed-in="{{signedIn}}"
+            access-token="{{accessToken}}"
+            force-oauth-events="[[forceOauthEvents]]"
+            width="wide"
+            theme="dark"></anypoint-signin>
         </template>
-        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listActive]]" on-tap="_enableGrid"></paper-icon-button>
-        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listActive]]" on-tap="_enableList"></paper-icon-button>
+        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listView]]" on-tap="_enableGrid"></paper-icon-button>
+        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listView]]" on-tap="_enableList"></paper-icon-button>
       </div>
     </div>
 
     <div class="search-bar">
-      <paper-input type="search" value="{{query}}" label="Search for APIs in Anypoint Exchange" on-search="updateSearch"></paper-input>
-      <paper-button raised on-tap="updateSearch">Search</paper-button>
+      <paper-input type="search" value="{{query}}" label="Search for APIs in Anypoint Exchange" on-keydown="_searchKeydown">
+        <paper-icon-button title="Search" suffix icon="arc:search" on-tap="updateSearch"></paper-icon-button>
+      </paper-input>
     </div>
-
+    <template is="dom-if" if="[[!authInitialized]]">
+      <div class="connecting-info">
+        <p>Connecting to Anypoint Exchange</p>
+        <paper-progress indeterminate></paper-progress>
+      </div>
+    </template>
     <template is="dom-if" if="[[querying]]">
       <paper-progress indeterminate></paper-progress>
     </template>
@@ -206,12 +224,12 @@ Custom property | Description | Default
       <p class="empty-info">Couldn't find requested API.</p>
     </template>
 
-    <section class="list" data-list$="[[listActive]]">
+    <section class="list" data-list$="[[listView]]">
       <template is="dom-repeat" items="[[items]]" id="list">
-        <template is="dom-if" if="[[!listActive]]" restamp="true">
+        <template is="dom-if" if="[[!listView]]" restamp="true">
           <exchange-search-grid-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-grid-item>
         </template>
-        <template is="dom-if" if="[[listActive]]" restamp="true">
+        <template is="dom-if" if="[[listView]]" restamp="true">
           <exchange-search-list-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-list-item>
         </template>
       </template>
@@ -284,7 +302,7 @@ Custom property | Description | Default
       // Search query for the list.
       query: String,
       // True if the Grid view is active
-      listActive: {
+      listView: {
         type: Boolean,
         value: false
       },
@@ -310,7 +328,7 @@ Custom property | Description | Default
       /**
        * Exchange's asset type to search.
        */
-      exchangeType: {
+      assetType: {
         type: String,
         value: 'rest-api',
         readOnly: true
@@ -327,7 +345,7 @@ Custom property | Description | Default
        */
       queryParams: {
         type: String,
-        computed: '_computeQueryParams(exchangeType, exchangeLimit, exchangeOffset, query)'
+        computed: '_computeQueryParams(assetType, exchangeLimit, exchangeOffset, query)'
       },
       /**
        * Scrolling target used to determine when authomatically download
@@ -401,18 +419,6 @@ Custom property | Description | Default
         observer: '_allowAuthChanged'
       },
       /**
-       * OAuth2 configuration for the Exchange.
-       */
-      oauth2Config: {
-        type: Object,
-        value: function() {
-          return {
-            type: 'implicit',
-            authorizationUrl: 'https://anypoint.mulesoft.com/accounts/oauth2/authorize'
-          };
-        }
-      },
-      /**
        * The `redirect_uri` parameter of the OAuth2 request.
        * It must be set when `allowAuth` is true or otherwise it will throw an
        * error when trying to request the toekn.
@@ -432,9 +438,18 @@ Custom property | Description | Default
         observer: '_accessTokenChenged'
       },
       // Computed value, true when access token is set.
-      isAuthorized: {
+      signedIn: Boolean,
+      /**
+       * Forces `anypoint-signin` element to use ARC's OAuth events.
+       */
+      forceOauthEvents: Boolean,
+      /**
+       * Flag indicating the authorization process has been initialized
+       */
+      authInitialized: {
         type: Boolean,
-        readOnly: true
+        notify: true,
+        value: false
       }
     },
 
@@ -444,9 +459,12 @@ Custom property | Description | Default
     ],
 
     ready: function() {
-      Polymer.RenderStatus.afterNextRender(this, function() {
-        this._sendAuthorize(false);
-      });
+      if (!this.allowAuth) {
+        this.authInitialized = true;
+        if (this._isOpened) {
+          this.updateSearch();
+        }
+      }
     },
 
     _scrollTargetChanged: function(scrollTarget) {
@@ -467,7 +485,7 @@ Custom property | Description | Default
      * @param {Boolean} isOpened The _isOpened propery value.
      */
     _checkLoad: function(isOpened) {
-      if (isOpened && !this.noMoreResults && !this.querying && !this.items) {
+      if (isOpened && this.authInitialized && !this.noMoreResults && !this.querying && !this.items) {
         this.queryCurrent();
       }
     },
@@ -490,8 +508,8 @@ Custom property | Description | Default
 
     // Handler for grid view button click
     _enableGrid: function() {
-      if (this.listActive) {
-        this.listActive = false;
+      if (this.listView) {
+        this.listView = false;
       }
       var toggle = this.$$('[data-action="grid-enable"]');
       if (!toggle.active) {
@@ -500,8 +518,8 @@ Custom property | Description | Default
     },
     // Handler for list view button click
     _enableList: function() {
-      if (!this.listActive) {
-        this.listActive = true;
+      if (!this.listView) {
+        this.listView = true;
       }
       var toggle = this.$$('[data-action="list-enable"]');
       if (!toggle.active) {
@@ -516,6 +534,13 @@ Custom property | Description | Default
     updateSearch: function() {
       this.reset();
       this.queryCurrent();
+    },
+
+    _searchKeydown: function(e) {
+      if (e.which === 13 || e.keyCode === 13) {
+        e.preventDefault();
+        this.updateSearch();
+      }
     },
 
     // Computes value for the `dataUnavailable` property.
@@ -551,7 +576,7 @@ Custom property | Description | Default
 
     _computeQueryParams(type, limit, offset, query) {
       var params = {
-        type: type,
+        type: this._getAssetTypes(type),
         limit: limit,
         offset: offset
       };
@@ -559,6 +584,21 @@ Custom property | Description | Default
         params.search = query;
       }
       return params;
+    },
+
+    _getAssetTypes: function(type) {
+      if (!type) {
+        return [];
+      }
+      if (type instanceof Array) {
+        return type;
+      }
+      if (type.indexOf(',') !== -1) {
+        type = type.split(',').map(function(item) {
+          return item.trim();
+        });
+      }
+      return type;
     },
 
     _onScroll: function() {
@@ -677,7 +717,7 @@ Custom property | Description | Default
     },
 
     _exchangeResponseError: function(e) {
-      if (e.detail.request.status === 401 && this.isAuthorized) {
+      if (e.detail.request.status === 401 && this.signedIn) {
         // token expored
         this.accessToken = undefined;
         this.$.tokenExpired.opened = true;
@@ -700,50 +740,6 @@ Custom property | Description | Default
     _unzipError: function() {
       this.$.unzipError.opened = true;
     },
-    /**
-     * Dispatches `oauth2-token-requested` custom event to request OAuth2 token.
-     */
-    authorize: function() {
-      this._sendAuthorize(true);
-    },
-    /**
-     * Sends `oauth2-token-requested` custom event to authorize with the
-     * Exchange server.
-     *
-     * @param {Boolean} interavtive If `false` then it performs non-interactive
-     * authorization in the background.
-     */
-    _sendAuthorize: function(interavtive) {
-      if (!this.allowAuth) {
-        return;
-      }
-      if (!this.exchangeClientId) {
-        throw new Error('Missing Exchange client ID.');
-      }
-      if (!this.exchangeRedirectUri) {
-        throw new Error('Missing Exchange redirect URI.');
-      }
-      var detail = Object.assign({}, this.oauth2Config);
-      this._lastState = this.generateState();
-      detail.state = this._lastState;
-      detail.clientId = this.exchangeClientId;
-      detail.redirectUrl = this.exchangeRedirectUri;
-      detail.interactive = interavtive;
-      this.fire('oauth2-token-requested', detail);
-    },
-    /**
-     * Generates `state` parameter for the OAuth2 call.
-     *
-     * @return {String} Generated state string.
-     */
-    generateState: function() {
-      let text = '';
-      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      for (let i = 0; i < 6; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-      }
-      return text;
-    },
 
     _allowAuthChanged: function(state) {
       if (state) {
@@ -754,48 +750,49 @@ Custom property | Description | Default
     },
 
     _listenOauth: function() {
-      this.listen(window, 'oauth2-error', '_oauth2ErrorHandler');
-      this.listen(window, 'oauth2-token-response', '_oauth2TokenHandler');
+      this.listen(this, 'anypoint-signin-aware-error', '_oauth2ErrorHandler');
+      this.listen(this, 'anypoint-signin-aware-signed-out', '_oauth2SignedOut');
+      this.listen(this, 'anypoint-signin-aware-success', '_oauth2SignedIn');
     },
 
     _unlistenOauth: function() {
-      this.unlisten(window, 'oauth2-error', '_oauth2ErrorHandler');
-      this.unlisten(window, 'oauth2-token-response', '_oauth2TokenHandler');
+      this.unlisten(this, 'anypoint-signin-aware-error', '_oauth2ErrorHandler');
+      this.unlisten(this, 'anypoint-signin-aware-signed-out', '_oauth2SignedOut');
+      this.unlisten(this, 'anypoint-signin-aware-success', '_oauth2SignedIn');
     },
 
     _oauth2ErrorHandler: function(e) {
-      if (this._lastState !== e.detail.state) {
-        return;
-      }
       var message = e.detail.message;
       this.$.errorToast.text = message;
       this.$.errorToast.opened = true;
+      if (!this.authInitialized) {
+        this.authInitialized = true;
+      }
     },
 
-    _oauth2TokenHandler: function(e) {
-      var info = e.detail;
-      if (!info) {
-        return;
+    _oauth2SignedOut: function() {
+      if (!this.authInitialized) {
+        this.authInitialized = true;
       }
-      if (this._lastState !== e.detail.state) {
-        return;
-      }
-      if (info.interactive === false && info.code && !info.accessToken) {
-        return;
-      }
-      this.accessToken = info.accessToken;
-    },
-
-    _accessTokenChenged: function(token) {
-      if (!token) {
-        this._setIsAuthorized(false);
-      } else {
-        this._setIsAuthorized(true);
-      }
-      this._setupAuthHeaders(token);
       if (this._isOpened) {
         this.updateSearch();
       }
+    },
+
+    _oauth2SignedIn: function() {
+      if (!this.authInitialized) {
+        this.authInitialized = true;
+      }
+      if (this._isOpened) {
+        this.updateSearch();
+      }
+    },
+
+    _accessTokenChenged: function(token, old) {
+      if (!old && !token) {
+        return;
+      }
+      this._setupAuthHeaders(token);
     },
 
     _setupAuthHeaders: function(token) {
