@@ -405,10 +405,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           element = fixture('auth');
         });
 
-        test('accessToken is not set', function() {
-          assert.isUndefined(element.accessToken);
-        });
-
         test('Automatically asks for access token', function(done) {
           document.body.addEventListener('oauth2-token-requested', function clb(e) {
             document.body.removeEventListener('oauth2-token-requested', clb);
@@ -416,6 +412,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             assert.isFalse(info.interactive);
             done();
           });
+        });
+
+        test('accessToken is not set', function() {
+          assert.isUndefined(element.accessToken);
         });
 
         test('Renders authorization button', function() {
