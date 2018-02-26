@@ -227,10 +227,10 @@ Custom property | Description | Default
     <section class="list" data-list$="[[listView]]">
       <template is="dom-repeat" items="[[items]]" id="list">
         <template is="dom-if" if="[[!listView]]" restamp="true">
-          <exchange-search-grid-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-grid-item>
+          <exchange-search-grid-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-grid-item>
         </template>
         <template is="dom-if" if="[[listView]]" restamp="true">
-          <exchange-search-list-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-list-item>
+          <exchange-search-list-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-list-item>
         </template>
       </template>
     </section>
@@ -450,7 +450,12 @@ Custom property | Description | Default
         type: Boolean,
         notify: true,
         value: false
-      }
+      },
+      /**
+       * Label to display in main action button of a list item.
+       * Default is `Download`.
+       */
+      actionLabel: String
     },
 
     observers: [
