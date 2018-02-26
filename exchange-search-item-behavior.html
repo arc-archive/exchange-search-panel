@@ -80,8 +80,8 @@
      * Dispatches the `download` custom event to inform the panel
      * about user action.
      */
-    requestDownload: function() {
-      this.fire('download', {}, {
+    requestAction: function() {
+      this.fire('main-action-requested', {}, {
         bubbles: false
       });
     }

@@ -39,6 +39,7 @@ Custom property | Description | Default
 `--exchange-search-grid-item-card-background-color` | Background color of the card item | `#fff`
 `--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
 `--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
+`--exchange-search-grid-item-tags-line` | Mixin applied to the tags container | `{}`
 
 @group UI Elements
 @element exchange-search-grid-item
@@ -94,6 +95,13 @@ Custom property | Description | Default
     .creator {
       color: rgba(0, 0, 0, 0.64);
     }
+
+    .tags-line {
+      max-height: 42px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      @apply --exchange-search-grid-item-tags-line;
+    }
     </style>
     <div class="card">
       <div class="title">
@@ -111,7 +119,7 @@ Custom property | Description | Default
         <paper-rating rating="[[item.rating]]" icon="arc:star" disabled title$="Api raiting: [[item.rating]]/5"></paper-rating>
       </div>
       <div class="actions">
-        <paper-button noink="[[noink]]" on-tap="requestDownload" class="open-button">[[actionLabel]]</paper-button>
+        <paper-button noink="[[noink]]" on-tap="requestAction" class="open-button">[[actionLabel]]</paper-button>
       </div>
     </div>
   </template>
