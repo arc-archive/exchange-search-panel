@@ -552,7 +552,16 @@ Custom property | Description | Default
       }
       return params;
     },
-
+    /**
+     * Parses list of types to an array of types.
+     * If the argument is array then it returns the same array.
+     *
+     * Note, this always returns array, even if the argument is empty.
+     *
+     * @param {String|Array} type Coma separated list of asset types.
+     * Whitespaces are trimmed.
+     * @return {Array<String>} List of asset types.
+     */
     _getAssetTypes: function(type) {
       if (!type) {
         return [];
@@ -567,7 +576,14 @@ Custom property | Description | Default
       }
       return type;
     },
-
+    /**
+     * Reacts to `scrollTarget` scroll event. If the scroll Y position to the
+     * bottom of the list is less than `listOffsetTrigger` then it triggers
+     * query function.
+     *
+     * Note, if `noMoreResults` flag is set it will never query for more data.
+     * You have to manually clear the property.
+     */
     _onScroll: function() {
       if (this.querying || this.noMoreResults) {
         return;
@@ -581,7 +597,12 @@ Custom property | Description | Default
         this.queryCurrent();
       }
     },
-
+    /**
+     * Dispatches `process-exchange-asset-data` when list item's
+     * `on-main-action-requested` custom event is handled.
+     *
+     * @param {CustomEvent} e
+     */
     _processItem: function(e) {
       var item = e.model.get('item');
       this.fire('process-exchange-asset-data', item);
@@ -615,7 +636,10 @@ Custom property | Description | Default
         this.authInitialized = true;
       }
     },
-
+    /**
+     * Handles `anypoint-signin-aware-signed-out` custom event.
+     * Handled when the user is signed out.
+     */
     _oauth2SignedOut: function() {
       if (!this.authInitialized) {
         this.authInitialized = true;
@@ -624,7 +648,10 @@ Custom property | Description | Default
         this.updateSearch();
       }
     },
-
+    /**
+     * Handles `anypoint-signin-aware-success` - the success - Anypoint
+     * sign in custom event. Updates search items for logged in user.
+     */
     _oauth2SignedIn: function() {
       if (!this.authInitialized) {
         this.authInitialized = true;
@@ -633,14 +660,24 @@ Custom property | Description | Default
         this.updateSearch();
       }
     },
-
+    /**
+     * Calls `_setupAuthHeaders()` function when token value change.
+     *
+     * @param {String|undefined} token
+     * @param {String|undefined} old
+     */
     _accessTokenChenged: function(token, old) {
       if (!old && !token) {
         return;
       }
       this._setupAuthHeaders(token);
     },
-
+    /**
+     * Sets up authorization headers on `iron-request` element if the token
+     * is available or clears headers if not.
+     *
+     * @param {?String} token Oauth 2 token value for Anypoint.
+     */
     _setupAuthHeaders: function(token) {
       var headers = {};
       if (token) {
