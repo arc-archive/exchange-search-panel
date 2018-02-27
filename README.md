@@ -5,7 +5,7 @@
 An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
 
 It handles queries to the exchange server, displays list of results, handles user query
-and downloads API data on user request.
+and informs the application when the user request asset details.
 It dispatches `process-incoming-data` custom event when user data are ready.
 
 ### Example
@@ -45,6 +45,24 @@ redirectUrl **String** -  |
 type **String** - Always `implicit` |
 authorizationUrl **String** -  |
 interactive **String** - After loading the element it tries the non-interactive method of authorization. When auth button is clicked then this value is always `true`. |
-| process-incoming-data | Fired when RAML data were read and ready to be processed.  Note, the event can be canceled. | type **String** - Always `raml`. |
-filesystem **?Array** - Optional. If there was a list of files associated with the import then it contains list of the files. |
-file **Blob** - The main RAML file. |
+| process-exchange-asset-data | Fired when the user requested to process the item. The `detail` object of the event contains item response from Exchange API.  Note, the event can be canceled. | groupId **String** -  |
+assetId **String** -  |
+version **String** -  |
+versionGroup **String** -  |
+productAPIVersion **String** -  |
+isPublic **Boolean** -  |
+name **String** -  |
+type **String** -  |
+status **String** -  |
+assetLink **String** -  |
+createdAt **String** -  |
+runtimeVersion **String** -  |
+rating **Number** -  |
+numberOfRates **Number** -  |
+id **String** -  |
+icon **String** -  |
+modifiedAt **String** -  |
+organization **Object** -  |
+createdBy **Object** -  |
+tags **Array** -  |
+files **Array** -  |
