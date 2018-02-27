@@ -573,6 +573,8 @@ Custom property | Description | Default
         type = type.split(',').map(function(item) {
           return item.trim();
         });
+      } else {
+        type = [type];
       }
       return type;
     },
