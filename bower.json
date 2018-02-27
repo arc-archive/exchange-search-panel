@@ -1,7 +1,7 @@
 {
   "name": "exchange-search-panel",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "authors": [
     "The Advanced REST client authors <arc@mulesoft.com>"

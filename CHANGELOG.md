@@ -1,3 +1,9 @@
+<a name="0.2.2"></a>
+## [0.2.2](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.2.1...0.2.2) (2018-02-27)
+
+
+
+
 <a name="0.2.1"></a>
 ## [0.2.1](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.1.5...0.2.1) (2018-02-27)
 
