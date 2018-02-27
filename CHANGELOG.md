@@ -1,3 +1,19 @@
+<a name="0.2.3"></a>
+## [0.2.3](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.2.2...0.2.3) (2018-02-27)
+
+
+### Docs
+
+* Updated documentation. ([3c36245507be620658fb288a3b8b566a30200b4f](https://github.com/advanced-rest-client/exchange-search-panel/commit/3c36245507be620658fb288a3b8b566a30200b4f))
+
+### Update
+
+* Added missing tests ([310307a526b026cd073c5db7acb3f83bfdbbd790](https://github.com/advanced-rest-client/exchange-search-panel/commit/310307a526b026cd073c5db7acb3f83bfdbbd790))
+* Added more browsers to test. ([f986b7df79d88b16e18fc104b14770d3b48dff7f](https://github.com/advanced-rest-client/exchange-search-panel/commit/f986b7df79d88b16e18fc104b14770d3b48dff7f))
+* Updated function definition. ([a8ffc11b49a16c1c07b59abf3c189d676c165fb2](https://github.com/advanced-rest-client/exchange-search-panel/commit/a8ffc11b49a16c1c07b59abf3c189d676c165fb2))
+
+
+
 <a name="0.2.2"></a>
 ## [0.2.2](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.2.1...0.2.2) (2018-02-27)
 
