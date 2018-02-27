@@ -399,6 +399,74 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
       });
 
+      suite('_getAssetTypes()', function() {
+        var element;
+        suiteSetup(function() {
+          element = fixture('basic');
+        });
+
+        test('Returns array if empty argument', function() {
+          const result = element._getAssetTypes();
+          assert.typeOf(result, 'array');
+          assert.lengthOf(result, 0);
+        });
+
+        test('Returns the same array as an argument', function() {
+          const arg = ['test'];
+          const result = element._getAssetTypes(arg);
+          assert.isTrue(result === arg);
+        });
+
+        test('Returns single type', function() {
+          const arg = 'test';
+          const result = element._getAssetTypes(arg);
+          assert.lengthOf(result, 1);
+          assert.equal(result[0], 'test');
+        });
+
+        test('Returns multiple types', function() {
+          const arg = 'rest-api,template';
+          const result = element._getAssetTypes(arg);
+          assert.lengthOf(result, 2);
+          assert.equal(result[0], 'rest-api');
+          assert.equal(result[1], 'template');
+        });
+
+        test('Trim types', function() {
+          const arg = ' rest-api , template , connector ';
+          const result = element._getAssetTypes(arg);
+          assert.lengthOf(result, 3);
+          assert.equal(result[0], 'rest-api');
+          assert.equal(result[1], 'template');
+          assert.equal(result[2], 'connector');
+        });
+      });
+
+      suite('_processItem()', function() {
+        var element;
+        suiteSetup(function(done) {
+          element = fixture('basic');
+          element.addEventListener('querying-changed', function clb(e) {
+            if (e.detail.value === false) {
+              element.removeEventListener('querying-changed', clb);
+              TestHelpers.forceXIfStamp(element);
+              done();
+            }
+          });
+        });
+
+        test('Dispatches process-exchange-asset-data event', function(done) {
+          const model = element.items[0];
+          element.addEventListener('process-exchange-asset-data', function clb(e) {
+            element.removeEventListener('process-exchange-asset-data', clb);
+            assert.deepEqual(e.detail, model);
+            done();
+          });
+          const item = element.$$('exchange-search-grid-item');
+          item.requestAction();
+        });
+      });
+
       suite('Authorization properties', function() {
         var element;
         setup(function() {
