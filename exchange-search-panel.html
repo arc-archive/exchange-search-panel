@@ -21,12 +21,6 @@ the License.
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../iron-ajax/iron-ajax.html">
-<link rel="import" href="../web-unzip/web-unzip.html">
-<link rel="import" href="../raml-main-entry-lookup/raml-main-entry-lookup.html">
-<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
-<link rel="import" href="../paper-dialog/paper-dialog.html">
-<link rel="import" href="../paper-listbox/paper-listbox.html">
-<link rel="import" href="../paper-item/paper-item-shared-styles.html">
 <link rel="import" href="../anypoint-signin/anypoint-signin.html">
 <link rel="import" href="exchange-search-grid-item.html">
 <link rel="import" href="exchange-search-list-item.html">
@@ -35,7 +29,7 @@ the License.
 An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
 
 It handles queries to the exchange server, displays list of results, handles user query
-and downloads API data on user request.
+and informs the application when the user request asset details.
 It dispatches `process-incoming-data` custom event when user data are ready.
 
 ### Example
@@ -227,10 +221,10 @@ Custom property | Description | Default
     <section class="list" data-list$="[[listView]]">
       <template is="dom-repeat" items="[[items]]" id="list">
         <template is="dom-if" if="[[!listView]]" restamp="true">
-          <exchange-search-grid-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-grid-item>
+          <exchange-search-grid-item item="[[item]]" on-main-action-requested="_processItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-grid-item>
         </template>
         <template is="dom-if" if="[[listView]]" restamp="true">
-          <exchange-search-list-item item="[[item]]" on-download="_downloadItem" noink="[[noink]]"></exchange-search-list-item>
+          <exchange-search-list-item item="[[item]]" on-main-action-requested="_processItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-list-item>
         </template>
       </template>
     </section>
@@ -239,32 +233,9 @@ Custom property | Description | Default
         <paper-button raised class="action-button" on-tap="queryCurrent">Load more</paper-button>
       </div>
     </template>
-
-    <paper-dialog id="fileSelectorDialog">
-      <h2>Select API main file</h2>
-      <paper-dialog-scrollable>
-        <paper-listbox>
-          <template is="dom-repeat" items="[[entryPoints]]">
-            <button class="paper-item" role="option" on-tap="_useEntryPoint">[[item.path]][[item.name]]</button>
-          </template>
-        </paper-listbox>
-      </paper-dialog-scrollable>
-      <div class="buttons">
-        <paper-button dialog-dismiss>Cancel</paper-button>
-      </div>
-    </paper-dialog>
     <iron-ajax id="query" url="[[exchangeSearchUri]]" handle-as="json" on-response="_exchangeResponse" debounce-duration="300" params="[[queryParams]]"  on-error="_exchangeResponseError"></iron-ajax>
-    <iron-ajax id="download" handle-as="blob" on-response="_assetDownloaded" on-error="_assetDownloadError"></iron-ajax>
-    <paper-toast id="noRamlFile" text="The asset doesn't contain RAML file information." class="error-toast"></paper-toast>
-    <paper-toast id="queryError" text="Unable to query for more data. Check your internet connection." class="error-toast"></paper-toast>
     <paper-toast id="tokenExpired" text="You are logged out from the Exchange. Log in and try again." class="error-toast"></paper-toast>
-    <paper-toast id="downloadError" text="Unable to download the asset. Check your internet connection." class="error-toast"></paper-toast>
-    <paper-toast id="unzipError" text="Unable to unzip RAML data. The zip file might be corrupted." class="error-toast"></paper-toast>
-    <paper-toast text="Downloading API definitions..." opened="[[downloadingAsset]]" duration="0"></paper-toast>
-    <paper-toast text="Reading file contents..." opened="[[readingFile]]" duration="0"></paper-toast>
     <paper-toast id="errorToast" class="error-toast"></paper-toast>
-    <web-unzip id="unzip" on-web-unzip-read="_fileUnzipped" on-error="_unzipError" auto-read flat-structure></web-unzip>
-    <raml-main-entry-lookup id="lookup" on-entry="_entryFound"></raml-main-entry-lookup>
   </template>
   <script>
   Polymer({
@@ -377,31 +348,6 @@ Custom property | Description | Default
         notify: true,
         value: false
       },
-      // True when downloaded zip is being processed.
-      readingFile: {
-        type: Boolean,
-        notify: true
-      },
-      // Will set to true when there's no entry point in the selected files.
-      noEntryPoint: {
-        type: Boolean,
-        notify: true
-      },
-      // Will set to true when there's there are miltiple entry points in the selected files.
-      multipleEntryPoints: {
-        type: Boolean,
-        notify: true
-      },
-      // List of detected entry points
-      entryPoints: {
-        type: Array,
-        notify: true
-      },
-      // True when the asset is being downloaded.
-      downloadingAsset: {
-        type: Boolean,
-        notify: true
-      },
       // Computed value, if true then it renders "load more" button below the list
       renderLoadMore: {
         type: Boolean,
@@ -450,7 +396,12 @@ Custom property | Description | Default
         type: Boolean,
         notify: true,
         value: false
-      }
+      },
+      /**
+       * Label to display in main action button of a list item.
+       * Default is `Download`.
+       */
+      actionLabel: String
     },
 
     observers: [
@@ -574,6 +525,22 @@ Custom property | Description | Default
       this._setQuerying(false);
     },
 
+    _exchangeResponseError: function(e) {
+      if (e.detail.request.status === 401 && this.signedIn) {
+        // token expored
+        this.accessToken = undefined;
+        this.$.tokenExpired.opened = true;
+        return;
+      }
+      var timeout = this.__retryTimeout || 1000;
+      timeout *= 2;
+      this.__retryTimeout = timeout;
+      this.$.queryError.opened = true;
+      this.async(function() {
+        this._setQuerying(false);
+      }, timeout);
+    },
+
     _computeQueryParams(type, limit, offset, query) {
       var params = {
         type: this._getAssetTypes(type),
@@ -615,130 +582,9 @@ Custom property | Description | Default
       }
     },
 
-    _downloadItem: function(e) {
+    _processItem: function(e) {
       var item = e.model.get('item');
-      var file = item.files.find(i => i.classifier === 'fat-raml');
-      if (!file) {
-        file = item.files.find(i => i.classifier === 'raml');
-      }
-      if (!file || !file.externalLink) {
-        this.$.noRamlFile.opened = true;
-        return;
-      }
-      this.$.download.url = file.externalLink;
-      this.downloadingAsset = true;
-      this.$.download.generateRequest();
-    },
-
-    _assetDownloaded: function(e) {
-      this.downloadingAsset = false;
-      var data = e.detail.response;
-      this.set('readingFile', true);
-      this.$.unzip.file = [new Blob([data], {type: 'application/zip'})];
-    },
-
-    _fileUnzipped: function(e) {
-      this.set('readingFile', false);
-      if (e.detail.fileStructure.length === 1) {
-        this._processEntries(e.detail.fileStructure);
-        return;
-      }
-      this.fileStructure = e.detail.fileStructure;
-      this.$.lookup.files = e.detail.fileStructure;
-    },
-
-    /**
-     * Handler for `entry` custom event of raml-main-entry-lookup
-     * element.
-     */
-    _entryFound: function(e) {
-      var file = e.detail.entry;
-      if (!file) {
-        this.noEntryPoint = true;
-        return;
-      }
-      if (file instanceof Array) {
-        var exit = true;
-        // just try to find common file name
-        for (let i = 0, len = file.length; i < len; i += 1) {
-          if (file[i].name === 'api.raml') {
-            file = file[i];
-            exit = false;
-            break;
-          }
-        }
-        if (exit) {
-          this.multipleEntryPoints = true;
-          this.entryPoints = file;
-          this.$.fileSelectorDialog.opened = true;
-          return;
-        }
-      }
-      this._processRaml(file.entry);
-    },
-
-    // Dispatches `process-incoming-data` for RAML file(s).
-    _processRaml: function(file) {
-      var filesystem = this.fileStructure || this.$.lookup.files;
-      this.fire('process-incoming-data', {
-        file: file,
-        filesystem: filesystem,
-        type: 'raml'
-      }, {
-        cancelable: true
-      });
-    },
-
-    /**
-     * Processes recorded files entries.
-     * @param {Array} entries List of files from the drop action.
-     */
-    _processEntries: function(entries) {
-      this.noEntryPoint = false;
-      this.multipleEntryPoints = false;
-      this.entryPoints = undefined;
-      this.fileStructure = undefined;
-      if (entries[0].name && entries[0].name.indexOf('.raml') !== -1) {
-        this._processRaml(entries[0]);
-      } else {
-        this.$.noRamlFile.opened = true;
-      }
-    },
-
-    /**
-     * Handler for user entry point selection.
-     */
-    _useEntryPoint: function(e) {
-      var item = e.model.get('item');
-      this.multipleEntryPoints = false;
-      this.entryPoints = undefined;
-      this._processRaml(item.entry);
-      this.$.fileSelectorDialog.opened = false;
-    },
-
-    _exchangeResponseError: function(e) {
-      if (e.detail.request.status === 401 && this.signedIn) {
-        // token expored
-        this.accessToken = undefined;
-        this.$.tokenExpired.opened = true;
-        return;
-      }
-      var timeout = this.__retryTimeout || 1000;
-      timeout *= 2;
-      this.__retryTimeout = timeout;
-      this.$.queryError.opened = true;
-      this.async(function() {
-        this._setQuerying(false);
-      }, timeout);
-    },
-
-    _assetDownloadError: function() {
-      this.downloadingAsset = false;
-      this.$.downloadError.opened = true;
-    },
-
-    _unzipError: function() {
-      this.$.unzipError.opened = true;
+      this.fire('process-exchange-asset-data', item);
     },
 
     _allowAuthChanged: function(state) {
@@ -803,15 +649,34 @@ Custom property | Description | Default
       this.$.query.headers = headers;
     }
     /**
-     * Fired when RAML data were read and ready to be processed.
+     * Fired when the user requested to process the item.
+     * The `detail` object of the event contains item response from
+     * Exchange API.
      *
      * Note, the event can be canceled.
      *
-     * @event process-incoming-data
-     * @param {String} type Always `raml`.
-     * @param {?Array} filesystem Optional. If there was a list of files
-     * associated with the import then it contains list of the files.
-     * @param {Blob} file The main RAML file.
+     * @event process-exchange-asset-data
+     * @param {String} groupId
+     * @param {String} assetId
+     * @param {String} version
+     * @param {String} versionGroup
+     * @param {String} productAPIVersion
+     * @param {Boolean} isPublic
+     * @param {String} name
+     * @param {String} type
+     * @param {String} status
+     * @param {String} assetLink
+     * @param {String} createdAt
+     * @param {String} runtimeVersion
+     * @param {Number} rating
+     * @param {Number} numberOfRates
+     * @param {String} id
+     * @param {String} icon
+     * @param {String} modifiedAt
+     * @param {Object} organization
+     * @param {Object} createdBy
+     * @param {Array} tags
+     * @param {Array} files
      */
     /**
      * Dispatched when the element or user request access token from the Exchange

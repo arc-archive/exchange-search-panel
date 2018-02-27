@@ -1,3 +1,14 @@
+<a name="0.2.1"></a>
+## [0.2.1](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.1.5...0.2.1) (2018-02-27)
+
+
+### Breaking
+
+* Bumped major version for braking changes. ([65e6bcd0464776f9badfae8a9b2e77636d2b1561](https://github.com/advanced-rest-client/exchange-search-panel/commit/65e6bcd0464776f9badfae8a9b2e77636d2b1561))
+* The element now only list assets and the main action only informas about the intent ([ca009a923afa25a2e455f10dde323c95811065aa](https://github.com/advanced-rest-client/exchange-search-panel/commit/ca009a923afa25a2e455f10dde323c95811065aa))
+
+
+
 <a name="0.1.5"></a>
 ## [0.1.5](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.1.4...0.1.5) (2018-02-20)
 

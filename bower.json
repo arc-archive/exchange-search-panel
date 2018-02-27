@@ -1,7 +1,7 @@
 {
   "name": "exchange-search-panel",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
-  "version": "0.1.5",
+  "version": "0.2.1",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "authors": [
     "The Advanced REST client authors <arc@mulesoft.com>"
@@ -33,11 +33,6 @@
     "paper-toast": "PolymerElements/paper-toast#<2",
     "arc-icons": "advanced-rest-client/arc-icons#^1.0.29",
     "paper-rating": "mgibas/paper-rating#^1.2.1",
-    "web-unzip": "advanced-rest-client/web-unzip#^0.1.3",
-    "raml-main-entry-lookup": "advanced-rest-client/raml-main-entry-lookup#^1.0.3",
-    "paper-dialog": "PolymerElements/paper-dialog#<2",
-    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#<2",
-    "paper-listbox": "PolymerElements/paper-listbox#<2",
     "iron-iconset-svg": "PolymerElements/iron-iconset-svg#<2",
     "anypoint-signin": "advanced-rest-client/anypoint-signin#^0.1.2"
   },
