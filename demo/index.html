@@ -1,59 +1,49 @@
 <!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 <html>
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
-
   <title>exchange-search-panel demo</title>
-
-  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
   <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
-  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
   <link rel="import" href="../../paper-toast/paper-toast.html">
   <link rel="import" href="../exchange-search-panel.html">
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    :root {
+      --arc-font-body1: {
+        @apply --paper-font-body1;
+      };
 
+      --arc-font-headline: {
+        @apply --paper-font-headline;
+      };
 
-  <style is="custom-style" include="demo-pages-shared-styles">
-  :root {
-    --arc-font-body1: {
-      @apply --paper-font-body1;
-    };
+      --action-button: {
+        background-color: var(--primary-color);
+        background-image: none;
+        color: white;
+        transition: background-color 300ms linear;
+      };
 
-    --arc-font-headline: {
-      @apply --paper-font-headline;
-    };
-
-    --action-button: {
-      background-color: var(--primary-color);
-      background-image: none;
-      color: white;
-      transition: background-color 300ms linear;
-    };
-
-    --action-button-hover: {
-      background-color: #04b3f5;
-      background-image: none;
-      color: white;
-    };
-  }
-  </style>
+      --action-button-hover: {
+        background-color: #04b3f5;
+        background-image: none;
+        color: white;
+      };
+    }
+    </style>
+  </custom-style>
 </head>
 <body unresolved>
-  <template is="dom-bind" id="app">
-    <exchange-search-panel allow-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" on-process-incoming-data="_onData"></exchange-search-panel>
-    <paper-toast text="Binary data received from the element." opened="{{receivedOpened}}"></paper-toast>
-  </template>
+  <dom-bind id="app">
+    <template is="dom-bind">
+      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]"></exchange-search-panel>
+    </template>
+  </dom-bind>
+  <paper-toast text="" id="actionToast"></paper-toast>
   <script>
   (function(scope) {
     scope.opened = true;
@@ -61,10 +51,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     //           '/oauth-authorization/oauth-popup.html');
     scope.redirectUrl = 'https://auth.advancedrestclient.com/oauth-popup.html';
     scope.clientId = '59KaqF90hLgZMJec';
-    scope._onData = function() {
-      scope.receivedOpened = true;
-    };
 
+    window.addEventListener('process-exchange-asset-data', (e) => {
+      const toast = document.getElementById('actionToast');
+      toast.text = `Action for asset ${e.detail.name}`;
+      toast.opened = true;
+    });
   })(document.getElementById('app'));
   </script>
 </body>
