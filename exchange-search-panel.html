@@ -219,7 +219,9 @@ the License.
    * ### Example
    *
    * ```html
-   * <exchange-search-panel on-process-exchange-asset-data="_getAssetDetails" action-label="Details"></exchange-search-panel>
+   * <exchange-search-panel
+   *  on-process-exchange-asset-data="_getAssetDetails"
+   *  action-label="Details"></exchange-search-panel>
    * ```
    *
    * ### New in version 2.0
@@ -249,7 +251,9 @@ the License.
    *
    * @customElement
    * @polymer
-   * @demo demo/index.html
+   * @demo demo/index.html Basic demo
+   * @demo demo/scroll-target.html Using scroll target
+   * @demo demo/shadow-scroll-target.html Using scroll target in shadow root
    * @memberof UiElements
    */
   class ExchangeSearchPanel extends Polymer.Element {
@@ -336,10 +340,8 @@ the License.
         scrollTarget: {
           type: Object,
           value: function() {
-            // return document.documentElement;
-            return window;
-          },
-          observer: '_scrollTargetChanged'
+            return this._defaultScrollTarget;
+          }
         },
         /**
          * Padding in pixels that will trigget query to the Exchange server
@@ -420,8 +422,16 @@ the License.
           type: Number,
           value: 4,
           observer: '_columnsChanged'
-        }
+        },
+
+        _isAttached: Boolean
       };
+    }
+
+    static get observers() {
+      return [
+        '_scrollTargetChanged(scrollTarget, _isAttached)'
+      ];
     }
 
     constructor() {
@@ -437,6 +447,12 @@ the License.
       if (!this.anypointAuth) {
         this.authInitialized = true;
       }
+      this._isAttached = true;
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback();
+      this._isAttached = false;
     }
 
     _authInitializedChanged(state) {
@@ -445,30 +461,76 @@ the License.
       }
     }
 
-    _scrollTargetChanged(scrollTarget) {
-      if (this._oldScrollTarget) {
-        this._oldScrollTarget.removeEventListener('scroll', this._onScroll);
-      }
-      if (scrollTarget === document.documentElement) {
-        scrollTarget = window;
-      }
-      this._oldScrollTarget = scrollTarget;
-      scrollTarget.addEventListener('scroll', this._onScroll);
+    /**
+     * The default scroll target.
+     *
+     * @type {Element}
+     */
+    get _defaultScrollTarget() {
+      return this._doc;
     }
     /**
-     * Auto loads first page of results when the element has been opened.
-     * It only calls `queryCurrent` if the element is opened in the UI and
-     * the `items` array hasn't been set.
+     * Shortcut for the document element
      *
-     * @param {Boolean} isOpened The _isOpened propery value.
+     * @type {Element}
      */
-    _checkLoad(isOpened) {
-      if (isOpened && this.authInitialized && !this.noMoreResults && !this.querying && !this.items) {
-        this.queryCurrent();
+    get _doc() {
+      return this.ownerDocument.documentElement;
+    }
+
+    _scrollTargetChanged(scrollTarget, isAttached) {
+      if (this._oldScrollTarget) {
+        const eventTarget = scrollTarget === this._doc ? window : scrollTarget;
+        eventTarget.removeEventListener('scroll', this._onScroll);
+        this._oldScrollTarget = undefined;
+      }
+      if (!isAttached) {
+        return;
+      }
+      if (scrollTarget === 'document') {
+        this.scrollTarget = this._doc;
+      } else if (typeof scrollTarget === 'string') {
+        let rootNode = this._findRootTarget();
+        if (rootNode && rootNode.querySelector) {
+          this.scrollTarget = rootNode.querySelector('#' + scrollTarget);
+        } else {
+          this.scrollTarget = undefined;
+        }
+      } else {
+        this._oldScrollTarget = scrollTarget;
+        if (scrollTarget) {
+          const eventTarget = scrollTarget === this._doc ? window : scrollTarget;
+          eventTarget.addEventListener('scroll', this._onScroll);
+        }
+      }
+    }
+    /**
+     * @return {Element} First in path element that has shadow root or
+     * ownerDocument of this component.
+     */
+    _findRootTarget() {
+      let target = this.parentNode;
+      const doc = this.ownerDocument;
+      while (true) {
+        if (!target) {
+          return doc;
+        }
+        if (target && target.shadowRoot) {
+          return target;
+        } else if (target && target.host) {
+          return target.host.shadowRoot;
+        } else if (target === doc) {
+          return target;
+        }
+        target = target.parentNode;
       }
     }
 
-    // Computes value for the `hasItems` property.
+    /**
+     * Computes value for the `hasItems` property.
+     * @param {Number} length
+     * @return {Boolean}
+     */
     _computeHasItems(length) {
       return !!(length);
     }
@@ -476,7 +538,9 @@ the License.
     _computeRenderLoadMore(querying, noMoreResults) {
       return !querying && !noMoreResults;
     }
-
+    /**
+     * Resets element state so it re-enables querying.
+     */
     reset() {
       this.set('items', []);
       this.set('exchangeOffset', 0);
@@ -515,7 +579,7 @@ the License.
     }
 
     _searchKeydown(e) {
-      if (e.which === 13 || e.keyCode === 13) {
+      if (event.key === 'Enter' || e.which === 13 || e.keyCode === 13) {
         e.preventDefault();
         this.updateSearch();
       }
@@ -621,10 +685,7 @@ the License.
       if (this.querying || this.noMoreResults) {
         return;
       }
-      let st = this.scrollTarget;
-      if (st === window) {
-        st = document.documentElement;
-      }
+      let st = this._oldScrollTarget;
       const padding = st.scrollHeight - (st.clientHeight + st.scrollTop);
       if (padding <= this.listOffsetTrigger) {
         this.queryCurrent();
@@ -681,9 +742,7 @@ the License.
       if (!this.authInitialized) {
         this.authInitialized = true;
       }
-      if (this._isOpened) {
-        this.updateSearch();
-      }
+      this.updateSearch();
     }
     /**
      * Handles `anypoint-signin-aware-success` - the success - Anypoint
@@ -693,9 +752,7 @@ the License.
       if (!this.authInitialized) {
         this.authInitialized = true;
       }
-      if (this._isOpened) {
-        this.updateSearch();
-      }
+      this.updateSearch();
     }
     /**
      * Calls `_setupAuthHeaders()` function when token value change.

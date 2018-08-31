@@ -28,7 +28,6 @@
   <script>
   /* global ExchangeServer, sinon */
   suite('basic with auto opened', function() {
-
     suiteSetup(function() {
       ExchangeServer.createServer();
     });
@@ -90,6 +89,10 @@
       test('renderLoadMore is false', function() {
         assert.isFalse(element.renderLoadMore);
       });
+
+      test('_isAttached is set', () => {
+        assert.isTrue(element._isAttached);
+      });
     });
 
     suite('basic with data loaded', function() {
@@ -127,11 +130,6 @@
 
       test('renderLoadMore is true when not querying', function() {
         assert.isTrue(element.renderLoadMore);
-      });
-
-      test('_checkLoad() will not call query function', function() {
-        element._checkLoad(true);
-        assert.isFalse(element.querying);
       });
     });
 

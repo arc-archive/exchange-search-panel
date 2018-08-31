@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
   "devDependencies": {
-    "@polymer/gen-typescript-declarations": "^1.1.1"
+    "@polymer/gen-typescript-declarations": "^1.5.1"
   },
   "private": false,
   "main": "exchange-search-panel.html",
@@ -12,7 +12,6 @@
     "lint": "polymer lint exchange-search-panel.html",
     "test-sauce": "polymer test --plugin sauce --job-name \"exchange-search-panel:local-test\"",
     "test": "polymer test --plugin local",
-    "update-deps": "npm update --quiet && bower update --quiet",
     "update-types": "gen-typescript-declarations --deleteExisting --outDir ."
   },
   "repository": {

@@ -14,13 +14,20 @@
   <link rel="import" href="../../arc-electron-default-theme/arc-electron-default-theme.html">
   <link rel="import" href="../exchange-search-panel.html">
   <custom-style>
-    <style include="demo-pages-shared-styles"></style>
+    <style include="demo-pages-shared-styles">
+    #scroller {
+      height: 600px;
+      overflow: auto;
+    }
+    </style>
   </custom-style>
 </head>
 <body unresolved>
   <dom-bind id="app">
     <template>
-      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]"></exchange-search-panel>
+      <div id="scroller">
+        <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" scroll-target="scroller"></exchange-search-panel>
+      </div>
     </template>
   </dom-bind>
   <paper-toast text="" id="actionToast"></paper-toast>

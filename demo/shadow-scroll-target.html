@@ -20,12 +20,35 @@
 <body unresolved>
   <dom-bind id="app">
     <template>
-      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]"></exchange-search-panel>
+      <demo-element exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]"></demo-element>
     </template>
   </dom-bind>
   <paper-toast text="" id="actionToast"></paper-toast>
   <script>
   (function(scope) {
+    class DemoElement extends Polymer.Element {
+      static get is() {return 'demo-element';}
+      static get properties() {
+        return {
+          exchangeRedirectUri: String,
+          exchangeClientId: String
+        };
+      }
+      static get template() {
+        return Polymer.html`<style>:host { display: block; }
+          #shadowScroller {
+            height: 600px;
+            overflow: auto;
+          }
+          </style>
+           <h2>In shadow root</h2>
+           <div id="shadowScroller">
+           <exchange-search-panel
+            scroll-target="shadowScroller"></exchange-search-panel>
+            </div>`;
+      }
+    }
+    window.customElements.define(DemoElement.is, DemoElement);
     scope.opened = true;
     // scope.redirectUrl = location.href.replace('/exchange-search-panel/demo/index.html',
     //           '/oauth-authorization/oauth-popup.html');

@@ -39,7 +39,8 @@
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",
     "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0",
-    "chance": "chancejs/chancejs#^1.0.4"
+    "chance": "chancejs/chancejs#^1.0.4",
+    "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview"
   },
   "ignore": [
     "**/.*",
