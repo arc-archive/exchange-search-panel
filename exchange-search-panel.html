@@ -579,7 +579,7 @@ the License.
     }
 
     _searchKeydown(e) {
-      if (event.key === 'Enter' || e.which === 13 || e.keyCode === 13) {
+      if (e.key === 'Enter' || e.which === 13 || e.keyCode === 13) {
         e.preventDefault();
         this.updateSearch();
       }
