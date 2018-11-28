@@ -40,7 +40,10 @@
     "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0",
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0",
     "chance": "chancejs/chancejs#^1.0.4",
-    "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview"
+    "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview",
+    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^2.0.3",
+    "paper-listbox": "PolymerElements/paper-listbox#^2.0.0",
+    "web-animations-js": "web-animations/web-animations-js#^2.3"
   },
   "ignore": [
     "**/.*",

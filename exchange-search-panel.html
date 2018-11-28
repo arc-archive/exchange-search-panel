@@ -30,6 +30,7 @@ the License.
     <style>
     :host {
       display: block;
+      color: var(--exchange-search-panel-font-color, inherit);
       @apply --exchange-search-panel;
 
       --paper-rating-icon: {
@@ -58,15 +59,17 @@ the License.
       @apply --exchange-search-panel-loader;
     }
 
-    paper-icon-button {
+    paper-icon-button.toggle-view {
       border-radius: 50%;
       min-width: 40px;
       min-height: 40px;
+      color: var(--exchange-search-panel-toggle-view-color);
+      background-color: var(--exchange-search-panel-toggle-view-background-color);
     }
 
-    paper-icon-button[active] {
-      background-color: var(--exchange-search-panel-toggle-view-active-background-color, #00A1DF);
+    paper-icon-button[active].toggle-view {
       color: var(--exchange-search-panel-toggle-view-active-color, #fff);
+      background-color: var(--exchange-search-panel-toggle-view-active-background-color, #00A1DF);
     }
 
     .error-toast {
@@ -99,6 +102,7 @@ the License.
     }
 
     .list {
+      color: inherit;
       @apply --layout-horizontal;
       @apply --layout-wrap;
       @apply --exchange-search-panel-list;
@@ -161,8 +165,8 @@ the License.
             width="wide"
             theme="dark"></anypoint-signin>
         </template>
-        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listView]]" on-tap="_enableGrid"></paper-icon-button>
-        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listView]]" on-tap="_enableList"></paper-icon-button>
+        <paper-icon-button icon="arc:view-column" data-action="grid-enable" toggles active="[[!listView]]" on-click="_enableGrid" class="toggle-view"></paper-icon-button>
+        <paper-icon-button icon="arc:view-list" data-action="list-enable" toggles active="[[listView]]" on-click="_enableList" class="toggle-view"></paper-icon-button>
       </div>
     </div>
     <div class="search-bar">
@@ -171,7 +175,7 @@ the License.
         <iron-input slot="input">
           <input type="search" value="{{query::input}}" aria-label="Search for APIs in Anypoint Exchange" on-keydown="_searchKeydown" on-search="_searchHandler">
         </iron-input>
-        <paper-icon-button title="Search" slot="suffix" icon="arc:search" on-tap="updateSearch"></paper-icon-button>
+        <paper-icon-button title="Search" slot="suffix" icon="arc:search" on-click="updateSearch"></paper-icon-button>
       </paper-input-container>
     </div>
     <template is="dom-if" if="[[!authInitialized]]">
@@ -187,6 +191,7 @@ the License.
       <p class="empty-info">Couldn't find requested API.</p>
     </template>
     <section class="list" data-list$="[[listView]]">
+
       <template is="dom-repeat" items="[[items]]" id="list">
         <template is="dom-if" if="[[!listView]]" restamp="true">
           <exchange-search-grid-item item="[[item]]" on-action-requested="_processItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-grid-item>
@@ -195,10 +200,11 @@ the License.
           <exchange-search-list-item item="[[item]]" on-action-requested="_processItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-list-item>
         </template>
       </template>
+
     </section>
     <template is="dom-if" if="[[renderLoadMore]]">
       <div class="load-more">
-        <paper-button raised class="action-button" on-tap="queryCurrent">Load more</paper-button>
+        <paper-button raised class="action-button" on-click="queryCurrent">Load more</paper-button>
       </div>
     </template>
     <iron-ajax id="query" url="[[exchangeSearchUri]]" handle-as="json" on-response="_exchangeResponse" debounce-duration="300" params="[[queryParams]]"  on-error="_exchangeResponseError"></iron-ajax>
@@ -237,17 +243,21 @@ the License.
    * Custom property | Description | Default
    * ----------------|-------------|----------
    * `--exchange-search-panel` | Mixin applied to the element | `{}`
-   * `--exchange-search-panel-header` | Mixin applied to the header section with title and the list control buttons | `{}`
+   * `--exchange-search-panel-font-color` | Background color for panel's font | `inherit`
+   * `--exchange-search-panel-loader` | Mixin applied to the paper-progress element | `{}`
+   * `--exchange-search-panel-toggle-view-color` | Color of toggle view icon buttons | ``
+   * `--exchange-search-panel-toggle-view-background-color` | Bg color of toggle view icon buttons | ``
+   * `--exchange-search-panel-toggle-view-active-color` | Color of toggle view icon buttons when active | `#00A1DF`
+   * `--exchange-search-panel-toggle-view-active-background-color` | Bg color of toggle view icon buttons when active | `#00A1DF`
    * `--arc-font-headline` | Mixin applied to the title of the panel | `{}`
-   * `--exchange-search-panel-toggle-view-active-background-color` | Background color of the lost control buttons | `#00A1DF`
-   * `--exchange-search-panel-toggle-view-active-color` | Color of the lost control buttons | `#00A1DF`
+   * `--exchange-search-panel-header` | Mixin applied to the header section with title and the list control buttons | `{}`
    * `--warning-primary-color` | Main color of the warning messages | `#FF7043`
    * `--warning-contrast-color` | Contrast color for the warning color | `#fff`
    * `--error-toast` | Mixin applied to the error toast | `{}`
    * `--empty-info` | Mixin applied to the label rendered when no data is available. | `{}`
-   * `--exchange-search-panel-list` | Mixin applied to the list element | `{}`
    * `--action-button` | Mixin applied to the "load more" button | `{}`
    * `--action-button-hover` | Mixin applied to the "load more" button when hovered | `{}`
+   * `--exchange-search-panel-list` | Mixin applied to the list element | `{}`
    *
    * @customElement
    * @polymer
@@ -785,7 +795,10 @@ the License.
      * @param {Number} value Current value of `columens` propert.
      */
     _columnsChanged(value) {
-      if (!value || typeof value !== 'number') {
+      if (typeof value === 'string') {
+        value = Number(value);
+      }
+      if (!value || typeof value !== 'number' || isNaN(value)) {
         value = 4;
       }
       this.updateStyles({

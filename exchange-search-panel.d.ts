@@ -55,17 +55,21 @@ declare namespace UiElements {
    * Custom property | Description | Default
    * ----------------|-------------|----------
    * `--exchange-search-panel` | Mixin applied to the element | `{}`
-   * `--exchange-search-panel-header` | Mixin applied to the header section with title and the list control buttons | `{}`
+   * `--exchange-search-panel-font-color` | Background color for panel's font | `inherit`
+   * `--exchange-search-panel-loader` | Mixin applied to the paper-progress element | `{}`
+   * `--exchange-search-panel-toggle-view-color` | Color of toggle view icon buttons | ``
+   * `--exchange-search-panel-toggle-view-background-color` | Bg color of toggle view icon buttons | ``
+   * `--exchange-search-panel-toggle-view-active-color` | Color of toggle view icon buttons when active | `#00A1DF`
+   * `--exchange-search-panel-toggle-view-active-background-color` | Bg color of toggle view icon buttons when active | `#00A1DF`
    * `--arc-font-headline` | Mixin applied to the title of the panel | `{}`
-   * `--exchange-search-panel-toggle-view-active-background-color` | Background color of the lost control buttons | `#00A1DF`
-   * `--exchange-search-panel-toggle-view-active-color` | Color of the lost control buttons | `#00A1DF`
+   * `--exchange-search-panel-header` | Mixin applied to the header section with title and the list control buttons | `{}`
    * `--warning-primary-color` | Main color of the warning messages | `#FF7043`
    * `--warning-contrast-color` | Contrast color for the warning color | `#fff`
    * `--error-toast` | Mixin applied to the error toast | `{}`
    * `--empty-info` | Mixin applied to the label rendered when no data is available. | `{}`
-   * `--exchange-search-panel-list` | Mixin applied to the list element | `{}`
    * `--action-button` | Mixin applied to the "load more" button | `{}`
    * `--action-button-hover` | Mixin applied to the "load more" button when hovered | `{}`
+   * `--exchange-search-panel-list` | Mixin applied to the list element | `{}`
    */
   class ExchangeSearchPanel extends Polymer.Element {
 

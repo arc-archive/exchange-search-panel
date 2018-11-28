@@ -28,7 +28,8 @@ the License.
     :host {
       @apply --arc-font-body1;
       display: block;
-      color: rgba(0, 0, 0, 0.87);
+      color: var(--exchange-search-panel-item-card-color, inherit);
+      background-color: var(--exchange-search-panel-item-background-color, #fff);
       @apply --exchange-search-list-item;
     }
 
@@ -70,7 +71,7 @@ the License.
     }
 
     .creator {
-      color: rgba(0, 0, 0, 0.64);
+      color: var(--exchange-search-list-item-author-color, rgba(0, 0, 0, 0.64));
     }
 
     .tags-line {

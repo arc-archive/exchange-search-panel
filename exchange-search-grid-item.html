@@ -26,15 +26,14 @@ the License.
     :host {
       display: block;
       @apply --arc-font-body1;
-      color: rgba(0, 0, 0, 0.87);
       @apply --shadow-elevation-4dp;
-      background-color: var(--exchange-search-grid-item-card-background-color, #fff);
+      color: var(--exchange-search-panel-item-card-color, inherit);
+      background-color: var(--exchange-search-panel-item-background-color, #fff);
       @apply --exchange-search-grid-item;
     }
 
     h3 {
-      font-size: 16px;
-      font-weight: 400;
+      @apply --paper-font-subhead;
       padding: 0;
       margin: 0;
       margin-left: 8px;
@@ -62,7 +61,7 @@ the License.
       height: 40px;
       min-width: 40px;
       min-height: 40px;
-      color: #73cfee;
+      color: var(--raml-icon-color, #73cfee);
     }
 
     .open-button {
@@ -74,7 +73,7 @@ the License.
     }
 
     .creator {
-      color: rgba(0, 0, 0, 0.64);
+      color: var(--exchange-search-list-item-author-color, rgba(0, 0, 0, 0.64));
     }
 
     .tags-line {
