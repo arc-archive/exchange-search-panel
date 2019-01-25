@@ -62,7 +62,7 @@
         </paper-dropdown-menu>
 
         <paper-dropdown-menu label="Asset type">
-          <paper-listbox slot="dropdown-content" attr-for-selected="data-type" selected="{{assetType}}">
+          <paper-listbox slot="dropdown-content" attr-for-selected="data-type" selected="{{type}}">
             <paper-item data-type="rest-api">REST API</paper-item>
             <paper-item data-type="connector">Connector</paper-item>
             <paper-item data-type="template">Template</paper-item>
@@ -73,7 +73,7 @@
           </paper-listbox>
         </paper-dropdown-menu>
       </header>
-      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" columns="[[gridSize]]" asset-type="{{assetType}}"></exchange-search-panel>
+      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" columns="[[gridSize]]" type="{{type}}"></exchange-search-panel>
     </template>
   </dom-bind>
   <paper-toast text="" id="actionToast"></paper-toast>

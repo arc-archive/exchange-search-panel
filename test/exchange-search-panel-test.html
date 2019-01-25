@@ -70,7 +70,7 @@
       test('queryParams is computed', function() {
         const p = element.queryParams;
         assert.typeOf(p, 'object');
-        assert.equal(p.type, element.assetType, 'type is set');
+        assert.equal(p.type, element.type, 'type is set');
         assert.equal(p.limit, element.exchangeLimit, 'limit is set');
         assert.equal(p.offset, element.exchangeOffset, 'offset is set');
         assert.isUndefined(p.search, 'search is undefined');
@@ -80,7 +80,7 @@
         element.query = 'test';
         const p = element.queryParams;
         assert.typeOf(p, 'object');
-        assert.equal(p.type, element.assetType, 'type is set');
+        assert.equal(p.type, element.type, 'type is set');
         assert.equal(p.limit, element.exchangeLimit, 'limit is set');
         assert.equal(p.offset, element.exchangeOffset, 'offset is set');
         assert.equal(p.search, element.query, 'search is set');
@@ -382,34 +382,34 @@
       });
     });
 
-    suite('_getAssetTypes()', function() {
+    suite('_getTypes()', function() {
       let element;
       suiteSetup(function() {
         element = fixture('basic');
       });
 
       test('Returns array if empty argument', function() {
-        const result = element._getAssetTypes();
+        const result = element._getTypes();
         assert.typeOf(result, 'array');
         assert.lengthOf(result, 0);
       });
 
       test('Returns the same array as an argument', function() {
         const arg = ['test'];
-        const result = element._getAssetTypes(arg);
+        const result = element._getTypes(arg);
         assert.isTrue(result === arg);
       });
 
       test('Returns single type', function() {
         const arg = 'test';
-        const result = element._getAssetTypes(arg);
+        const result = element._getTypes(arg);
         assert.lengthOf(result, 1);
         assert.equal(result[0], 'test');
       });
 
       test('Returns multiple types', function() {
         const arg = 'rest-api,template';
-        const result = element._getAssetTypes(arg);
+        const result = element._getTypes(arg);
         assert.lengthOf(result, 2);
         assert.equal(result[0], 'rest-api');
         assert.equal(result[1], 'template');
@@ -417,7 +417,7 @@
 
       test('Trim types', function() {
         const arg = ' rest-api , template , connector ';
-        const result = element._getAssetTypes(arg);
+        const result = element._getTypes(arg);
         assert.lengthOf(result, 3);
         assert.equal(result[0], 'rest-api');
         assert.equal(result[1], 'template');

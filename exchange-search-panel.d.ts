@@ -131,8 +131,10 @@ declare namespace UiElements {
 
     /**
      * Exchange's asset type to search.
+     * Note that this also determines the title of panel unless you set
+     * `panelTitle` property.
      */
-    readonly assetType: string|null|undefined;
+    type: string|null|undefined;
 
     /**
      * An URI to the endpoint with the search API.
@@ -143,6 +145,19 @@ declare namespace UiElements {
      * Computed value of query parameters to be sent to Exchange's API
      */
     readonly queryParams: string|null|undefined;
+
+    /**
+     * Use this to set panel title value. By default is uses `type`
+     * property to determine the title. When this property is set the title
+     * will always be as the value defined in this property regardless the value
+     * of `type`.
+     */
+    panelTitle: string|null|undefined;
+
+    /**
+     * Computed value for the panel title.
+     */
+    readonly _effectivePanelTitle: string|null|undefined;
 
     /**
      * Scrolling target used to determine when authomatically download
@@ -288,7 +303,7 @@ declare namespace UiElements {
      * Whitespaces are trimmed.
      * @returns List of asset types.
      */
-    _getAssetTypes(type: String|any[]|null): Array<String|null>|null;
+    _getTypes(type: String|any[]|null): Array<String|null>|null;
 
     /**
      * Reacts to `scrollTarget` scroll event. If the scroll Y position to the
@@ -341,6 +356,16 @@ declare namespace UiElements {
      * @param value Current value of `columens` propert.
      */
     _columnsChanged(value: Number|null): void;
+
+    /**
+     * Computes value for the panel title.
+     *
+     * @param pageTitle Value of `pageTitle` property
+     * @param type Current asset type
+     * @returns Value for panel title.
+     */
+    _computePanelTitle(pageTitle: String|null, type: String|null): String|null;
+    _typeChanged(value: any, old: any): void;
   }
 }
 

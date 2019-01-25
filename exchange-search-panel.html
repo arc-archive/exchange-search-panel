@@ -324,7 +324,7 @@ the License.
          * Note that this also determines the title of panel unless you set
          * `panelTitle` property.
          */
-        assetType: {
+        type: {
           type: String,
           value: 'rest-api',
           notify: true,
@@ -342,13 +342,13 @@ the License.
          */
         queryParams: {
           type: String,
-          computed: '_computeQueryParams(assetType, exchangeLimit, exchangeOffset, query)'
+          computed: '_computeQueryParams(type, exchangeLimit, exchangeOffset, query)'
         },
         /**
-         * Use this to set panel title value. By default is uses `assetType`
+         * Use this to set panel title value. By default is uses `type`
          * property to determine the title. When this property is set the title
          * will always be as the value defined in this property regardless the value
-         * of `assetType`.
+         * of `type`.
          */
         panelTitle: String,
         /**
@@ -356,7 +356,7 @@ the License.
          */
         _effectivePanelTitle: {
           type: String,
-          computed: '_computePanelTitle(panelTitle, assetType)'
+          computed: '_computePanelTitle(panelTitle, type)'
         },
         /**
          * Scrolling target used to determine when authomatically download
@@ -664,7 +664,7 @@ the License.
 
     _computeQueryParams(type, limit, offset, query) {
       const params = {
-        type: this._getAssetTypes(type),
+        type: this._getTypes(type),
         limit: limit,
         offset: offset
       };
@@ -683,7 +683,7 @@ the License.
      * Whitespaces are trimmed.
      * @return {Array<String>} List of asset types.
      */
-    _getAssetTypes(type) {
+    _getTypes(type) {
       if (!type) {
         return [];
       }
@@ -824,16 +824,16 @@ the License.
     /**
      * Computes value for the panel title.
      * @param {?String} pageTitle Value of `pageTitle` property
-     * @param {?String} assetType Current asset type
+     * @param {?String} type Current asset type
      * @return {String} Value for panel title.
      */
-    _computePanelTitle(pageTitle, assetType) {
+    _computePanelTitle(pageTitle, type) {
       if (pageTitle) {
         return pageTitle;
       }
       const prefix = 'Explore ';
       let content;
-      switch (assetType) {
+      switch (type) {
         case 'rest-api': content = 'REST APIs'; break;
         case 'connector': content = 'connectors'; break;
         case 'template': content = 'templates'; break;
