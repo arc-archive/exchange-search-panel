@@ -484,6 +484,55 @@
         assert.equal(headers.authorization, 'Bearer test');
       });
     });
+
+    suite('_computePanelTitle()', () => {
+      let element;
+      suiteSetup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns predefined title', () => {
+        const result = element._computePanelTitle('test-title', 'rest-api');
+        assert.equal(result, 'test-title');
+      });
+
+      [
+        ['rest-api', 'Explore REST APIs'],
+        ['connector', 'Explore connectors'],
+        ['template', 'Explore templates'],
+        ['example', 'Explore examples'],
+        ['soap-api', 'Explore SOAP APIs'],
+        ['raml-fragment', 'Explore API fragments'],
+        ['custom', 'Explore custom assets'],
+        ['template,custom', 'Explore Exchange assets']
+      ].forEach((item) => {
+        test('Returns title for ' + item[0], () => {
+          const result = element._computePanelTitle(undefined, item[0]);
+          assert.equal(result, item[1]);
+        });
+      });
+    });
+
+    suite('_typeChanged()', () => {
+      let element;
+      suiteSetup(function() {
+        element = fixture('basic');
+      });
+
+      test('Does nothing when initializing', () => {
+        let called = false;
+        element.updateSearch = () => called = true;
+        element._typeChanged('rest-api');
+        assert.isFalse(called);
+      });
+
+      test('Calls updateSearch when type chenges', () => {
+        let called = false;
+        element.updateSearch = () => called = true;
+        element._typeChanged('rest-api', 'something');
+        assert.isTrue(called);
+      });
+    });
   });
   </script>
 </body>

@@ -60,8 +60,20 @@
             <paper-item data-size="8">8</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
+
+        <paper-dropdown-menu label="Asset type">
+          <paper-listbox slot="dropdown-content" attr-for-selected="data-type" selected="{{assetType}}">
+            <paper-item data-type="rest-api">REST API</paper-item>
+            <paper-item data-type="connector">Connector</paper-item>
+            <paper-item data-type="template">Template</paper-item>
+            <paper-item data-type="example">Example</paper-item>
+            <paper-item data-type="soap-api">SOAP API</paper-item>
+            <paper-item data-type="raml-fragment">API fragment</paper-item>
+            <paper-item data-type="custom">Custom asset</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
       </header>
-      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" columns="[[gridSize]]"></exchange-search-panel>
+      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" columns="[[gridSize]]" asset-type="{{assetType}}"></exchange-search-panel>
     </template>
   </dom-bind>
   <paper-toast text="" id="actionToast"></paper-toast>

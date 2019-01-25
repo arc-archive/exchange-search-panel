@@ -151,7 +151,7 @@ the License.
     }
     </style>
     <div class="header">
-      <h2>Explore REST APIs</h2>
+      <h2>[[_effectivePanelTitle]]</h2>
       <div class="header-actions">
         <template is="dom-if" if="[[anypointAuth]]">
           <anypoint-signin
@@ -321,11 +321,14 @@ the License.
         },
         /**
          * Exchange's asset type to search.
+         * Note that this also determines the title of panel unless you set
+         * `panelTitle` property.
          */
         assetType: {
           type: String,
           value: 'rest-api',
-          readOnly: true
+          notify: true,
+          observer: '_typeChanged'
         },
         /**
          * An URI to the endpoint with the search API.
@@ -340,6 +343,20 @@ the License.
         queryParams: {
           type: String,
           computed: '_computeQueryParams(assetType, exchangeLimit, exchangeOffset, query)'
+        },
+        /**
+         * Use this to set panel title value. By default is uses `assetType`
+         * property to determine the title. When this property is set the title
+         * will always be as the value defined in this property regardless the value
+         * of `assetType`.
+         */
+        panelTitle: String,
+        /**
+         * Computed value for the panel title.
+         */
+        _effectivePanelTitle: {
+          type: String,
+          computed: '_computePanelTitle(panelTitle, assetType)'
         },
         /**
          * Scrolling target used to determine when authomatically download
@@ -610,12 +627,14 @@ the License.
      * It uses current `queryParams` to generate request.
      */
     queryCurrent() {
+      if (this.querying) {
+        return;
+      }
       this._setQuerying(true);
       this.$.query.generateRequest();
     }
 
     _exchangeResponse(e) {
-      this.__retryTimeout = undefined;
       const data = e.detail.response;
       if (!data || !data.length) {
         this.noMoreResults = true;
@@ -633,17 +652,14 @@ the License.
     }
 
     _exchangeResponseError(e) {
+      this._setQuerying(false);
       if (e.detail.request.status === 401 && this.signedIn) {
         // token expored
         this.accessToken = undefined;
         this.$.tokenExpired.opened = true;
         return;
       }
-      let timeout = this.__retryTimeout || 1000;
-      timeout *= 2;
-      this.__retryTimeout = timeout;
       this.$.queryError.opened = true;
-      setTimeout(() => this._setQuerying(false), timeout);
     }
 
     _computeQueryParams(type, limit, offset, query) {
@@ -804,6 +820,38 @@ the License.
       this.updateStyles({
         '--exchange-search-grid-item-computed-width': (100/value) + '%'
       });
+    }
+    /**
+     * Computes value for the panel title.
+     * @param {?String} pageTitle Value of `pageTitle` property
+     * @param {?String} assetType Current asset type
+     * @return {String} Value for panel title.
+     */
+    _computePanelTitle(pageTitle, assetType) {
+      if (pageTitle) {
+        return pageTitle;
+      }
+      const prefix = 'Explore ';
+      let content;
+      switch (assetType) {
+        case 'rest-api': content = 'REST APIs'; break;
+        case 'connector': content = 'connectors'; break;
+        case 'template': content = 'templates'; break;
+        case 'example': content = 'examples'; break;
+        case 'soap-api': content = 'SOAP APIs'; break;
+        case 'raml-fragment': content = 'API fragments'; break;
+        case 'custom': content = 'custom assets'; break;
+        default: content = 'Exchange assets';
+      }
+      return prefix + content;
+    }
+
+    _typeChanged(value, old) {
+      if (old === undefined) {
+        // Initialization.
+        return;
+      }
+      this.updateSearch();
     }
     /**
      * Fired when the user requested to process the item.

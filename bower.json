@@ -30,7 +30,7 @@
     "paper-toast": "PolymerElements/paper-toast#^2.0.0",
     "arc-icons": "advanced-rest-client/arc-icons#^2.0.0",
     "iron-iconset-svg": "PolymerElements/iron-iconset-svg#^2.0.0",
-    "anypoint-signin": "advanced-rest-client/anypoint-signin#2.0.0-preview",
+    "anypoint-signin": "advanced-rest-client/anypoint-signin#2.0.0",
     "star-rating": "greenyouse/star-rating#^2.0.2"
   },
   "devDependencies": {
