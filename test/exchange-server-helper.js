@@ -17,7 +17,7 @@ const ExchangeServer = {
     let url = /^https:\/\/anypoint\.mulesoft\.com\/exchange\/api\/v1\/assets\?*/;
     this.srv.respondWith('GET', url, function(request) {
       let result = [];
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 5; i++) {
         result.push(ExchangeServer.createListObject());
       }
       request.respond(200, {}, JSON.stringify(result));
