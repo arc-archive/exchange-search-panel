@@ -22,6 +22,7 @@ the License.
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../anypoint-signin/anypoint-signin.html">
+<link rel="import" href="../iron-media-query/iron-media-query.html">
 <link rel="import" href="exchange-search-grid-item.html">
 <link rel="import" href="exchange-search-list-item.html">
 <dom-module id="exchange-search-panel">
@@ -171,7 +172,7 @@ the License.
     </div>
     <div class="search-bar">
       <paper-input-container no-label-float>
-        <label slot="label">Search for APIs in Anypoint Exchange</label>
+        <label slot="label">Search Anypoint Exchange</label>
         <iron-input slot="input">
           <input type="search" value="{{query::input}}" aria-label="Search for APIs in Anypoint Exchange" on-keydown="_searchKeydown" on-search="_searchHandler">
         </iron-input>
@@ -191,7 +192,6 @@ the License.
       <p class="empty-info">Couldn't find requested API.</p>
     </template>
     <section class="list" data-list$="[[listView]]">
-
       <template is="dom-repeat" items="[[items]]" id="list">
         <template is="dom-if" if="[[!listView]]" restamp="true">
           <exchange-search-grid-item item="[[item]]" on-action-requested="_processItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-grid-item>
@@ -200,7 +200,6 @@ the License.
           <exchange-search-list-item item="[[item]]" on-action-requested="_processItem" noink="[[noink]]" action-label="[[actionLabel]]"></exchange-search-list-item>
         </template>
       </template>
-
     </section>
     <template is="dom-if" if="[[renderLoadMore]]">
       <div class="load-more">
@@ -210,6 +209,14 @@ the License.
     <iron-ajax id="query" url="[[exchangeSearchUri]]" handle-as="json" on-response="_exchangeResponse" debounce-duration="300" params="[[queryParams]]"  on-error="_exchangeResponseError"></iron-ajax>
     <paper-toast id="tokenExpired" text="You are logged out from the Exchange. Log in and try again." class="error-toast"></paper-toast>
     <paper-toast id="errorToast" class="error-toast"></paper-toast>
+
+    <iron-media-query query="(min-width: 2200px)" query-matches="{{_mq2200}}"></iron-media-query>
+    <iron-media-query query="(min-width: 2000px)" query-matches="{{_mq2000}}"></iron-media-query>
+    <iron-media-query query="(min-width: 1900px)" query-matches="{{_mq1900}}"></iron-media-query>
+    <iron-media-query query="(min-width: 1700px)" query-matches="{{_mq1700}}"></iron-media-query>
+    <iron-media-query query="(min-width: 1400px)" query-matches="{{_mq1400}}"></iron-media-query>
+    <iron-media-query query="(min-width: 756px)" query-matches="{{_mq756}}"></iron-media-query>
+    <iron-media-query query="(min-width: 450px)" query-matches="{{_mq450}}"></iron-media-query>
   </template>
   <script>
   /**
@@ -267,7 +274,9 @@ the License.
    * @memberof UiElements
    */
   class ExchangeSearchPanel extends Polymer.Element {
-    static get is() {return 'exchange-search-panel';}
+    static get is() {
+      return 'exchange-search-panel';
+    }
     static get properties() {
       return {
         /**
@@ -434,8 +443,7 @@ the License.
         authInitialized: {
           type: Boolean,
           notify: true,
-          value: false,
-          observer: '_authInitializedChanged'
+          value: false
         },
         /**
          * Label to display in main action button of a list item.
@@ -443,11 +451,33 @@ the License.
          */
         actionLabel: String,
         /**
+         * When set the component will not query the Exchange for assets when
+         * attached to DOM or when authentication state change.
+         */
+        noAuto: Boolean,
+        /**
          * Number of columns to render in "grid" view.
+         * Set to `auto` to use media queries to determine pre set number of colum
+         * depending on the screen size. It won't checks for element size so
+         * do not use `auto` when embedding the element not as whole width
+         * view.
          */
         columns: {
           type: Number,
-          value: 4,
+          value: '4'
+        },
+
+        _mq2200: Boolean,
+        _mq1900: Boolean,
+        _mq2000: Boolean,
+        _mq1700: Boolean,
+        _mq1400: Boolean,
+        _mq756: Boolean,
+        _mq450: Boolean,
+
+        _effectiveColumns: {
+          type: Number,
+          computed: '_computeColumns(columns, _mq2200, _mq2000, _mq1900, _mq1700, _mq1400, _mq756, _mq450)',
           observer: '_columnsChanged'
         },
 
@@ -473,6 +503,9 @@ the License.
       super.connectedCallback();
       if (!this.anypointAuth) {
         this.authInitialized = true;
+        if (!this.noAuto) {
+          this.updateSearch();
+        }
       }
       this._isAttached = true;
     }
@@ -480,12 +513,6 @@ the License.
     disconnectedCallback() {
       super.disconnectedCallback();
       this._isAttached = false;
-    }
-
-    _authInitializedChanged(state) {
-      if (state) {
-        this.updateSearch();
-      }
     }
 
     /**
@@ -508,7 +535,9 @@ the License.
     _scrollTargetChanged(scrollTarget, isAttached) {
       if (this._oldScrollTarget) {
         const eventTarget = scrollTarget === this._doc ? window : scrollTarget;
-        eventTarget.removeEventListener('scroll', this._onScroll);
+        if (eventTarget.removeEventListener) {
+          eventTarget.removeEventListener('scroll', this._onScroll);
+        }
         this._oldScrollTarget = undefined;
       }
       if (!isAttached) {
@@ -657,9 +686,11 @@ the License.
         // token expored
         this.accessToken = undefined;
         this.$.tokenExpired.opened = true;
+        this.signedIn = false;
         return;
       }
-      this.$.queryError.opened = true;
+      this.$.errorToast.text = 'Unable to get data from Exchange.';
+      this.$.errorToast.opened = true;
     }
 
     _computeQueryParams(type, limit, offset, query) {
@@ -758,6 +789,9 @@ the License.
       this.$.errorToast.opened = true;
       if (!this.authInitialized) {
         this.authInitialized = true;
+        if (!this.noAuto) {
+          this.updateSearch();
+        }
       }
     }
     /**
@@ -768,7 +802,9 @@ the License.
       if (!this.authInitialized) {
         this.authInitialized = true;
       }
-      this.updateSearch();
+      if (!this.noAuto) {
+        this.updateSearch();
+      }
     }
     /**
      * Handles `anypoint-signin-aware-success` - the success - Anypoint
@@ -778,7 +814,9 @@ the License.
       if (!this.authInitialized) {
         this.authInitialized = true;
       }
-      this.updateSearch();
+      if (!this.noAuto) {
+        this.updateSearch();
+      }
     }
     /**
      * Calls `_setupAuthHeaders()` function when token value change.
@@ -811,12 +849,6 @@ the License.
      * @param {Number} value Current value of `columens` propert.
      */
     _columnsChanged(value) {
-      if (typeof value === 'string') {
-        value = Number(value);
-      }
-      if (!value || typeof value !== 'number' || isNaN(value)) {
-        value = 4;
-      }
       this.updateStyles({
         '--exchange-search-grid-item-computed-width': (100/value) + '%'
       });
@@ -852,6 +884,35 @@ the License.
         return;
       }
       this.updateSearch();
+    }
+    /**
+     * Computes an effective value of `columns` property.
+     * If first argument is a number this will be used as a number of columns.
+     * Otherwise it uses media queries to determine the sate.
+     * @param {String|Number} columns Number of columens to use or auto to compute the value.
+     * @param {Boolean} m2200
+     * @param {Boolean} m2000
+     * @param {Boolean} m1900
+     * @param {Boolean} m1700
+     * @param {Boolean} m1400
+     * @param {Boolean} m756
+     * @param {Boolean} m450
+     * @return {Number}
+     */
+    _computeColumns(columns, m2200, m2000, m1900, m1700, m1400, m756, m450) {
+      if (!isNaN(columns)) {
+        return Number(columns);
+      }
+      switch (true) {
+        case m2200: return 8;
+        case m2000: return 7;
+        case m1900: return 6;
+        case m1700: return 5;
+        case m1400: return 4;
+        case m756: return 3;
+        case m450: return 2;
+        default: return 1;
+      }
     }
     /**
      * Fired when the user requested to process the item.

@@ -58,6 +58,7 @@
             <paper-item data-size="6">6</paper-item>
             <paper-item data-size="7">7</paper-item>
             <paper-item data-size="8">8</paper-item>
+            <paper-item data-size="auto">Auto</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
 
@@ -70,6 +71,7 @@
             <paper-item data-type="soap-api">SOAP API</paper-item>
             <paper-item data-type="raml-fragment">API fragment</paper-item>
             <paper-item data-type="custom">Custom asset</paper-item>
+            <paper-item data-type="">Any asset</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
       </header>
@@ -80,7 +82,7 @@
   <script>
   (function(scope) {
     scope.theme = 'arc';
-    scope.gridSize = '4';
+    scope.gridSize = 'auto';
     // scope.redirectUrl = location.href.replace('/exchange-search-panel/demo/index.html',
     //           '/oauth-authorization/oauth-popup.html');
     scope.redirectUrl = 'https://auth.advancedrestclient.com/oauth-popup.html';
