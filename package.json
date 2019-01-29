@@ -1,6 +1,6 @@
 {
   "name": "@api-components/exchange-search-panel",
-  "version": "2.0.0-preview",
+  "version": "2.0.0",
   "license": "Apache-2.0",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
   "devDependencies": {
