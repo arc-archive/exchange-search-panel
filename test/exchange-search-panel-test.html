@@ -55,10 +55,6 @@
         flush(() => done());
       });
 
-      test('querying is true', function() {
-        assert.isTrue(element.querying);
-      });
-
       test('dataUnavailable is computed', function() {
         assert.isFalse(element.dataUnavailable);
       });
