@@ -8,6 +8,10 @@
  *   exchange-search-panel.html
  */
 
+
+// tslint:disable:variable-name Describing an API that's defined elsewhere.
+// tslint:disable:no-any describes the API as best we are able today
+
 /// <reference path="../polymer/types/polymer-element.d.ts" />
 /// <reference path="../paper-toast/paper-toast.d.ts" />
 /// <reference path="../paper-progress/paper-progress.d.ts" />
@@ -19,6 +23,7 @@
 /// <reference path="../iron-flex-layout/iron-flex-layout.d.ts" />
 /// <reference path="../iron-ajax/iron-ajax.d.ts" />
 /// <reference path="../anypoint-signin/anypoint-signin.d.ts" />
+/// <reference path="../iron-media-query/iron-media-query.d.ts" />
 /// <reference path="exchange-search-grid-item.d.ts" />
 /// <reference path="exchange-search-list-item.d.ts" />
 
@@ -234,13 +239,30 @@ declare namespace UiElements {
     actionLabel: string|null|undefined;
 
     /**
+     * When set the component will not query the Exchange for assets when
+     * attached to DOM or when authentication state change.
+     */
+    noAuto: boolean|null|undefined;
+
+    /**
      * Number of columns to render in "grid" view.
+     * Set to `auto` to use media queries to determine pre set number of colum
+     * depending on the screen size. It won't checks for element size so
+     * do not use `auto` when embedding the element not as whole width
+     * view.
      */
     columns: number|null|undefined;
+    _mq2200: boolean|null|undefined;
+    _mq1900: boolean|null|undefined;
+    _mq2000: boolean|null|undefined;
+    _mq1700: boolean|null|undefined;
+    _mq1400: boolean|null|undefined;
+    _mq756: boolean|null|undefined;
+    _mq450: boolean|null|undefined;
+    readonly _effectiveColumns: number|null|undefined;
     _isAttached: boolean|null|undefined;
     connectedCallback(): void;
     disconnectedCallback(): void;
-    _authInitializedChanged(state: any): void;
     _scrollTargetChanged(scrollTarget: any, isAttached: any): void;
 
     /**
@@ -366,6 +388,15 @@ declare namespace UiElements {
      */
     _computePanelTitle(pageTitle: String|null, type: String|null): String|null;
     _typeChanged(value: any, old: any): void;
+
+    /**
+     * Computes an effective value of `columns` property.
+     * If first argument is a number this will be used as a number of columns.
+     * Otherwise it uses media queries to determine the sate.
+     *
+     * @param columns Number of columens to use or auto to compute the value.
+     */
+    _computeColumns(columns: String|Number|null, m2200: Boolean|null, m2000: Boolean|null, m1900: Boolean|null, m1700: Boolean|null, m1400: Boolean|null, m756: Boolean|null, m450: Boolean|null): Number|null;
   }
 }
 

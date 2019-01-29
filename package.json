@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
   "devDependencies": {
-    "@polymer/gen-typescript-declarations": "^1.5.1"
+    "@polymer/gen-typescript-declarations": "^1.6.1"
   },
   "private": false,
   "main": "exchange-search-panel.html",

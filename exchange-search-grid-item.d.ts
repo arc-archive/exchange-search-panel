@@ -8,6 +8,9 @@
  *   exchange-search-grid-item.html
  */
 
+
+// tslint:disable:variable-name Describing an API that's defined elsewhere.
+
 /// <reference path="../polymer/types/polymer-element.d.ts" />
 /// <reference path="../arc-icons/arc-icons.d.ts" />
 /// <reference path="../iron-flex-layout/iron-flex-layout.d.ts" />
