@@ -1,8 +1,8 @@
 {
   "name": "exchange-search-panel",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
-  "version": "1.0.0",
-  "license": "Apache-2.0 OR CC-BY-4.0",
+  "version": "2.0.0-preview",
+  "license": "Apache-2.0",
   "authors": [
     "The Advanced REST client authors <arc@mulesoft.com>"
   ],
@@ -11,44 +11,43 @@
     "polymer"
   ],
   "private": true,
-  "main": [
-    "exchange-search-panel.html"
-  ],
+  "main": "exchange-search-panel.html",
   "repository": {
     "type": "git",
     "url": "git@github.com:advanced-rest-client/exchange-search-panel.git"
   },
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.9.2",
-    "iron-ajax": "PolymerElements/iron-ajax#<2",
-    "paper-button": "PolymerElements/paper-button#<2",
-    "paper-input": "PolymerElements/paper-input#<2",
-    "paper-progress": "PolymerElements/paper-progress#<2",
-    "iron-flex-layout": "PolymerElements/iron-flex-layout#<2",
-    "paper-styles": "PolymerElements/paper-styles#<2",
-    "iron-icon": "PolymerElements/iron-icon#<2",
-    "paper-item": "PolymerElements/paper-item#<2",
-    "paper-icon-button": "PolymerElements/paper-icon-button#<2",
-    "openable-panel-behavior": "advanced-rest-client/openable-panel-behavior#^0.1.2",
-    "paper-toast": "PolymerElements/paper-toast#<2",
-    "arc-icons": "advanced-rest-client/arc-icons#^1.0.29",
-    "paper-rating": "mgibas/paper-rating#^1.2.1",
-    "iron-iconset-svg": "PolymerElements/iron-iconset-svg#<2",
-    "anypoint-signin": "advanced-rest-client/anypoint-signin#^0.1.2"
+    "polymer": "Polymer/polymer#^2.0.0",
+    "iron-ajax": "PolymerElements/iron-ajax#^2.0.0",
+    "paper-button": "PolymerElements/paper-button#^2.0.0",
+    "paper-input": "PolymerElements/paper-input#^2.0.0",
+    "paper-progress": "PolymerElements/paper-progress#^2.0.0",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#^2.0.0",
+    "paper-styles": "PolymerElements/paper-styles#^2.0.0",
+    "iron-icon": "PolymerElements/iron-icon#^2.0.0",
+    "paper-item": "PolymerElements/paper-item#^2.0.0",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^2.0.0",
+    "paper-toast": "PolymerElements/paper-toast#^2.0.0",
+    "arc-icons": "advanced-rest-client/arc-icons#^2.0.0",
+    "iron-iconset-svg": "PolymerElements/iron-iconset-svg#^2.0.0",
+    "anypoint-signin": "advanced-rest-client/anypoint-signin#2.0.0",
+    "star-rating": "greenyouse/star-rating#^2.0.2",
+    "iron-media-query": "PolymerElements/iron-media-query#^2.0.0"
   },
   "devDependencies": {
-    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
-    "web-component-tester": "^6.0.0",
-    "paper-styles": "polymerelements/paper-styles#^1.0.2",
-    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
-    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
-    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
-    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
-    "chance": "chancejs/chancejs#^1.0.4"
+    "iron-component-page": "PolymerElements/iron-component-page#^3.0.1",
+    "web-component-tester": "Polymer/web-component-tester#^6.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0",
+    "chance": "chancejs/chancejs#^1.0.4",
+    "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview",
+    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^2.0.3",
+    "paper-listbox": "PolymerElements/paper-listbox#^2.0.0",
+    "web-animations-js": "web-animations/web-animations-js#^2.3"
   },
   "ignore": [
     "**/.*",
-    "dependencyci.yml",
     "node_modules",
     "bower_components",
     "test",

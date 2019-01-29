@@ -11,7 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../arc-icons/arc-icons.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../paper-styles/shadow.html">
@@ -20,39 +20,16 @@ the License.
 <link rel="import" href="../paper-item/paper-item.html">
 <link rel="import" href="../paper-item/paper-icon-item.html">
 <link rel="import" href="../paper-item/paper-item-body.html">
-<link rel="import" href="../paper-rating/paper-rating.html">
-<link rel="import" href="exchange-search-item-behavior.html">
-<!--
-`<exchange-search-list-item>` Displays a single list item for Exchange
-search rersults panel.
-
-### Example
-```
-<exchange-search-list-item item="{...}" on-download="..."></exchange-search-list-item>
-```
-
-### Styling
-`<exchange-search-list-item>` provides the following custom properties and mixins for styling:
-
-Custom property | Description | Default
-----------------|-------------|----------
-`--exchange-search-list-item` | Mixin applied to the element | `{}`
-`--exchange-search-list-item-action-button` | Mixin applied to the visible accrion button | `{}`
-`--exchange-search-list-item-card-background-color` | Background color of the card item | `#fff`
-`--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
-`--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
-
-@group UI Elements
-@element exchange-search-list-item
-@demo demo/index.html
--->
+<link rel="import" href="../star-rating/star-rating.html">
+<link rel="import" href="exchange-search-item-mixin.html">
 <dom-module id="exchange-search-list-item">
   <template>
     <style>
     :host {
       @apply --arc-font-body1;
       display: block;
-      color: rgba(0, 0, 0, 0.87);
+      color: var(--exchange-search-panel-item-card-color, inherit);
+      background-color: var(--exchange-search-panel-item-background-color, #fff);
       @apply --exchange-search-list-item;
     }
 
@@ -94,15 +71,38 @@ Custom property | Description | Default
     }
 
     .creator {
-      color: rgba(0, 0, 0, 0.64);
+      color: var(--exchange-search-list-item-author-color, rgba(0, 0, 0, 0.64));
+    }
+
+    .tags-line {
+      overflow: hidden;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .tag-label,
+    .tag-value {
+      display: block;
+    }
+
+    .tag-value {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      margin-left: 8px;
+    }
+
+    star-rating {
+      --iron-icon-height: 20px;
+      --iron-icon-width: 20px;
+      display: inline-block;
     }
     </style>
     <paper-icon-item>
-      <iron-icon icon="[[_computeIconIcon(item)]]" item-icon class="api-icon" src="[[_computeIconSrc(item)]]"></iron-icon>
+      <iron-icon icon="[[_computeIconIcon(item)]]" slot="item-icon" class="api-icon" src="[[_computeIconSrc(item)]]"></iron-icon>
       <paper-item-body two-line>
         <div class="top-line">
           <h3>[[item.name]]</h3>
-          <paper-rating rating="[[item.rating]]" icon="arc:star" disabled title$="Api raiting: [[item.rating]]/5"></paper-rating>
+          <star-rating rating="[[item.rating]]" read-only title$="Api raiting: [[item.rating]]/5"></star-rating>
         </div>
         <div secondary class="details">
           <p class="meta creator">by [[item.organization.name]]</p>
@@ -118,9 +118,37 @@ Custom property | Description | Default
     </paper-icon-item>
   </template>
   <script>
-  Polymer({
-    is: 'exchange-search-list-item',
-    behaviors: [ArcBehaviors.ExchangeSearchItemBehavior]
-  });
+  /**
+   * `<exchange-search-list-item>` Displays a single list item for Exchange
+   * search rersults panel.
+   *
+   * ### Example
+   *
+   * ```html
+   * <exchange-search-list-item item="{...}" on-download="..."></exchange-search-list-item>
+   * ```
+   *
+   * ### Styling
+   *
+   * `<exchange-search-list-item>` provides the following custom properties and mixins for styling:
+   *
+   * Custom property | Description | Default
+   * ----------------|-------------|----------
+   * `--exchange-search-list-item` | Mixin applied to the element | `{}`
+   * `--exchange-search-list-item-action-button` | Mixin applied to the visible accrion button | `{}`
+   * `--exchange-search-list-item-card-background-color` | Background color of the card item | `#fff`
+   * `--rating-icon-color` | Color of the rating icons when highlighted | `--primary-text-color`
+   * `--rating-unselected-opacity` | Color of the rating icons when not highlighted | `0.4`
+   *
+   * @customElement
+   * @polymer
+   * @demo demo/index.html
+   * @appliesMixin ArcBehaviors.ExchangeSearchItemMixin
+   * @memberof UiElements
+   */
+  class ExchangeSearchListItem extends ArcBehaviors.ExchangeSearchItemMixin(Polymer.Element) {
+    static get is() {return 'exchange-search-list-item';}
+  }
+  window.customElements.define(ExchangeSearchListItem.is, ExchangeSearchListItem);
   </script>
 </dom-module>

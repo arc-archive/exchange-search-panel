@@ -1,70 +1,157 @@
 <!doctype html>
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
 <html>
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
-
   <title>exchange-search-panel demo</title>
-
-  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <link rel="import" href="../../shadycss/apply-shim.html">
+  <link rel="import" href="../../polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
   <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
-  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-styles/shadow.html">
+  <link rel="import" href="../../paper-dropdown-menu/paper-dropdown-menu.html">
+  <link rel="import" href="../../paper-item/paper-item.html">
+  <link rel="import" href="../../paper-listbox/paper-listbox.html">
+  <link rel="import" href="../../neon-animation/web-animations.html">
   <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../../arc-electron-default-theme/arc-electron-default-theme.html">
   <link rel="import" href="../exchange-search-panel.html">
-
-
-  <style is="custom-style" include="demo-pages-shared-styles">
-  :root {
-    --arc-font-body1: {
-      @apply --paper-font-body1;
-    };
-
-    --arc-font-headline: {
-      @apply --paper-font-headline;
-    };
-
-    --action-button: {
-      background-color: var(--primary-color);
-      background-image: none;
-      color: white;
-      transition: background-color 300ms linear;
-    };
-
-    --action-button-hover: {
-      background-color: #04b3f5;
-      background-image: none;
-      color: white;
-    };
-  }
-  </style>
+  <custom-style>
+    <style include="demo-pages-shared-styles">
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--demo-page-background-color);
+    }
+    header {
+      padding: 12px 24px;
+      background-color: var(--demo-page-header-background-color, #607D8B);
+      --iron-icon-fill-color: #fff;
+      --paper-input-container-input-color: #fff;
+      --paper-input-container-focus-color: #fff;
+      --paper-input-container-color: #fff;
+    }
+    </style>
+  </custom-style>
 </head>
 <body unresolved>
-  <template is="dom-bind" id="app">
-    <exchange-search-panel allow-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" on-process-incoming-data="_onData"></exchange-search-panel>
-    <paper-toast text="Binary data received from the element." opened="{{receivedOpened}}"></paper-toast>
-  </template>
+  <dom-bind id="app">
+    <template>
+      <header>
+        <paper-dropdown-menu label="Theme">
+          <paper-listbox slot="dropdown-content" attr-for-selected="data-theme" selected="{{theme}}" on-selected-changed="_themeChanged">
+            <paper-item data-theme="arc">ARC default theme</paper-item>
+            <paper-item data-theme="dark">Dark theme</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <paper-dropdown-menu label="Grid size">
+          <paper-listbox slot="dropdown-content" attr-for-selected="data-size" selected="{{gridSize}}">
+            <paper-item data-size="1">1</paper-item>
+            <paper-item data-size="2">2</paper-item>
+            <paper-item data-size="3">3</paper-item>
+            <paper-item data-size="4">4</paper-item>
+            <paper-item data-size="5">5</paper-item>
+            <paper-item data-size="6">6</paper-item>
+            <paper-item data-size="7">7</paper-item>
+            <paper-item data-size="8">8</paper-item>
+            <paper-item data-size="auto">Auto</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <paper-dropdown-menu label="Asset type">
+          <paper-listbox slot="dropdown-content" attr-for-selected="data-type" selected="{{type}}">
+            <paper-item data-type="rest-api">REST API</paper-item>
+            <paper-item data-type="connector">Connector</paper-item>
+            <paper-item data-type="template">Template</paper-item>
+            <paper-item data-type="example">Example</paper-item>
+            <paper-item data-type="soap-api">SOAP API</paper-item>
+            <paper-item data-type="raml-fragment">API fragment</paper-item>
+            <paper-item data-type="custom">Custom asset</paper-item>
+            <paper-item data-type="">Any asset</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+      </header>
+      <exchange-search-panel anypoint-auth exchange-redirect-uri="[[redirectUrl]]" exchange-client-id="[[clientId]]" columns="[[gridSize]]" type="{{type}}"></exchange-search-panel>
+    </template>
+  </dom-bind>
+  <paper-toast text="" id="actionToast"></paper-toast>
   <script>
   (function(scope) {
-    scope.opened = true;
+    scope.theme = 'arc';
+    scope.gridSize = 'auto';
     // scope.redirectUrl = location.href.replace('/exchange-search-panel/demo/index.html',
     //           '/oauth-authorization/oauth-popup.html');
     scope.redirectUrl = 'https://auth.advancedrestclient.com/oauth-popup.html';
     scope.clientId = '59KaqF90hLgZMJec';
-    scope._onData = function() {
-      scope.receivedOpened = true;
+
+    scope._themeChanged = function(e) {
+      if (e.detail.value === 'dark') {
+        scope._themeDark();
+      } else {
+        scope._themeArc();
+      }
     };
 
+    scope._themeDark = function() {
+      scope._styleDocument({
+        '--demo-page-background-color': '#455A64',
+        '--demo-page-header-background-color': '#263238',
+        '--exchange-search-panel-font-color': '#fff',
+        '--paper-input-container-input-color': '#fff',
+        '--paper-input-container-color': 'rgba(255, 255, 255, 0.54)',
+        '--exchange-search-panel-toggle-view-color': 'rgba(255, 255, 255, 0.64)',
+        '--exchange-search-panel-item-background-color': '#546E7A',
+        '--exchange-search-list-item-author-color': 'rgba(255, 255, 255, 0.74)',
+        '--paper-item-body-secondary-color': 'rgba(255, 255, 255, 0.64)',
+        '--exchange-search-panel-toggle-view-active-background-color': '#ECEFF1',
+        '--exchange-search-panel-toggle-view-active-color': '#37474F'
+      });
+      // debugger;
+      // scope._applyTheme({
+      //   '--exchange-search-panel-font-color': '#fff'
+      // });
+    };
+
+    scope._themeArc = function() {
+      scope._styleDocument({
+        '--demo-page-background-color': '#fafafa',
+        '--demo-page-header-background-color': '#607D8B',
+        '--exchange-search-panel-font-color': 'rgba(0, 0, 0, 0.87)',
+        '--paper-input-container-input-color': '#000',
+        '--paper-input-container-color': 'rgba(0, 0, 0, 0.54)',
+        '--exchange-search-panel-toggle-view-color': 'rgba(0, 0, 0, 0.54)',
+        '--exchange-search-panel-item-background-color': '#fff',
+        '--exchange-search-list-item-author-color': 'rgba(0, 0, 0, 0.64)',
+        '--paper-item-body-secondary-color': 'var(--secondary-text-color)',
+        '--exchange-search-panel-toggle-view-active-background-color': '#00A1DF',
+        '--exchange-search-panel-toggle-view-active-color': '#fff'
+      });
+      // scope._applyTheme({
+      //   '--exchange-search-panel-font-color': 'rgba(0, 0, 0, 0.87)'
+      // });
+    };
+
+    scope._applyTheme = function(styles) {
+      document.querySelector('exchange-search-panel').updateStyles(styles);
+    };
+
+    scope._styleDocument = function(styles) {
+      const target = document.querySelector('html').style;
+      Object.keys(styles).forEach((key) => {
+        target.setProperty(key, styles[key]);
+      });
+      document.querySelector('exchange-search-panel').updateStyles(styles);
+    };
+
+    window.addEventListener('process-exchange-asset-data', (e) => {
+      const toast = document.getElementById('actionToast');
+      toast.text = `Action for asset ${e.detail.name}`;
+      toast.opened = true;
+    });
   })(document.getElementById('app'));
   </script>
 </body>

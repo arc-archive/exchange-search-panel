@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>exchange-search-panel test</title>
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <script src="../../iron-test-helpers/test-helpers.js"></script>
+  <script src="../../iron-test-helpers/mock-interactions.js"></script>
+  <script src="../../chance/dist/chance.min.js"></script>
+  <script src="exchange-server-helper.js"></script>
+  <link rel="import" href="../exchange-search-panel.html">
+</head>
+<body>
+  <test-fixture id="basic">
+    <template>
+      <exchange-search-panel></exchange-search-panel>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="auth">
+    <template>
+      <exchange-search-panel anypoint-auth exchange-redirect-uri="https://domain.com" exchange-client-id="test1234" force-oauth-events></exchange-search-panel>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="NoAuto">
+    <template>
+      <exchange-search-panel no-auto></exchange-search-panel>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="NoAutoAuth">
+    <template>
+      <exchange-search-panel no-auto anypoint-auth exchange-redirect-uri="https://domain.com" exchange-client-id="test1234"></exchange-search-panel>
+    </template>
+  </test-fixture>
+
+  <script>
+  /* global ExchangeServer, sinon */
+  suite('basic with auto opened', function() {
+    suiteSetup(function() {
+      ExchangeServer.createServer();
+    });
+
+    suiteTeardown(function() {
+      ExchangeServer.restore();
+    });
+
+    suite('basic when auto querying', function() {
+      let element;
+      setup(function(done) {
+        element = fixture('basic');
+        flush(() => done());
+      });
+
+      test('querying is true', function() {
+        assert.isTrue(element.querying);
+      });
+
+      test('dataUnavailable is computed', function() {
+        assert.isFalse(element.dataUnavailable);
+      });
+
+      test('hasItems is false', function() {
+        assert.isFalse(element.hasItems);
+      });
+
+      test('query is undefined', function() {
+        assert.isUndefined(element.query, '');
+      });
+
+      test('noMoreResults is false by default', function() {
+        assert.isFalse(element.noMoreResults);
+      });
+
+      test('List view is false by default', function() {
+        assert.isFalse(element.listView);
+      });
+
+      test('queryParams is computed', function() {
+        const p = element.queryParams;
+        assert.typeOf(p, 'object');
+        assert.equal(p.type, element.type, 'type is set');
+        assert.equal(p.limit, element.exchangeLimit, 'limit is set');
+        assert.equal(p.offset, element.exchangeOffset, 'offset is set');
+        assert.isUndefined(p.search, 'search is undefined');
+      });
+
+      test('queryParams is computed with search', function() {
+        element.query = 'test';
+        const p = element.queryParams;
+        assert.typeOf(p, 'object');
+        assert.equal(p.type, element.type, 'type is set');
+        assert.equal(p.limit, element.exchangeLimit, 'limit is set');
+        assert.equal(p.offset, element.exchangeOffset, 'offset is set');
+        assert.equal(p.search, element.query, 'search is set');
+      });
+
+      test('renderLoadMore is false', function() {
+        assert.isFalse(element.renderLoadMore);
+      });
+
+      test('_isAttached is set', () => {
+        assert.isTrue(element._isAttached);
+      });
+    });
+
+    suite('basic with data loaded', function() {
+      let element;
+      setup(function(done) {
+        element = fixture('basic');
+        element.addEventListener('querying-changed', function clb(e) {
+          if (e.detail.value === false) {
+            element.removeEventListener('querying-changed', clb);
+            done();
+          }
+        });
+      });
+
+      test('querying is false', function() {
+        assert.isFalse(element.querying);
+      });
+
+      test('dataUnavailable is computed', function() {
+        assert.isFalse(element.dataUnavailable);
+      });
+
+      test('items is set', function() {
+        assert.typeOf(element.items, 'array', 'items is an array');
+        assert.lengthOf(element.items, 5, 'items contains one page of results');
+      });
+
+      test('exchangeOffset is moved by number of items on the list', function() {
+        assert.equal(element.exchangeOffset, 5);
+      });
+
+      test('noMoreResults is true when less than offset', function() {
+        assert.isTrue(element.noMoreResults);
+      });
+
+      test('renderLoadMore is false when not querying and no more results', function() {
+        assert.isFalse(element.renderLoadMore);
+      });
+    });
+
+    suite('reset()', function() {
+      let element;
+      setup(function() {
+        element = fixture('basic');
+        element.items = [{name: 'test'}];
+        element.exchangeOffset = 20;
+        element.noMoreResults = true;
+        element.querying = true;
+        element.reset();
+      });
+
+      test('Resets the items', function() {
+        assert.typeOf(element.items, 'array', 'items is an array');
+        assert.lengthOf(element.items, 0, 'items is empty');
+      });
+
+      test('Resets exchangeOffset', function() {
+        assert.equal(element.exchangeOffset, 0);
+      });
+
+      test('Resets noMoreResults', function() {
+        assert.isFalse(element.noMoreResults);
+      });
+
+      test('Resets querying', function() {
+        assert.isFalse(element.querying);
+      });
+    });
+
+    suite('_enableList()', function() {
+      let element;
+      setup(function(done) {
+        element = fixture('basic');
+        element.addEventListener('querying-changed', function clb(e) {
+          if (e.detail.value === false) {
+            element.removeEventListener('querying-changed', clb);
+            flush(() => done());
+          }
+        });
+      });
+
+      test('Sets listView to true', function() {
+        element._enableList();
+        assert.isTrue(element.listView);
+      });
+
+      test('Renders list items', function(done) {
+        element._enableList();
+        flush(() => {
+          const item = element.shadowRoot.querySelector('exchange-search-list-item');
+          assert.isOk(item);
+          done();
+        });
+      });
+
+      test('Keeps toggle button enabled', function() {
+        element._enableList();
+        const item = element.shadowRoot.querySelector('[data-action="list-enable"]');
+        assert.isTrue(item.active);
+      });
+    });
+
+    suite('_enableGrid()', function() {
+      let element;
+      setup(function(done) {
+        element = fixture('basic');
+        element.listView = true;
+        element.addEventListener('querying-changed', function clb(e) {
+          if (e.detail.value === false) {
+            element.removeEventListener('querying-changed', clb);
+            flush(() => done());
+          }
+        });
+      });
+
+      test('Sets listView to false', function() {
+        element._enableGrid();
+        assert.isFalse(element.listView);
+      });
+
+      test('Renders grid items', function(done) {
+        element._enableGrid();
+        flush(() => {
+          const item = element.shadowRoot.querySelector('exchange-search-grid-item');
+          assert.isOk(item);
+          done();
+        });
+      });
+
+      test('Keeps toggle button enabled', function() {
+        element._enableGrid();
+        const item = element.shadowRoot.querySelector('[data-action="grid-enable"]');
+        assert.isTrue(item.active);
+      });
+    });
+
+    suite('updateSearch()', function() {
+      let element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Calls reset function', function() {
+        const stub = sinon.stub(element, 'reset');
+        element.updateSearch();
+        assert.isTrue(stub.called);
+        stub.restore();
+      });
+
+      test('Calls query function', function() {
+        const stub = sinon.stub(element, 'queryCurrent');
+        element.updateSearch();
+        assert.isTrue(stub.called);
+        stub.restore();
+      });
+    });
+
+    suite('_computeDataUnavailable()', function() {
+      let element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns true when both arguments are falsy', function() {
+        const result = element._computeDataUnavailable(false, false);
+        assert.isTrue(result);
+      });
+
+      test('Returns false for any other combination', function() {
+        let result = element._computeDataUnavailable(true, false);
+        assert.isFalse(result);
+        result = element._computeDataUnavailable(false, true);
+        assert.isFalse(result);
+        result = element._computeDataUnavailable(true, true);
+        assert.isFalse(result);
+      });
+    });
+
+    suite('queryCurrent()', function() {
+      let element;
+      setup(function(done) {
+        element = fixture('basic');
+        flush(() => done());
+      });
+
+      test('Sets querying to true', function() {
+        element.queryCurrent();
+        assert.isTrue(element.querying);
+      });
+
+      test('Calls ajax element', function(done) {
+        let called = false;
+        element._exchangeResponse = function() {
+          if (called) {
+            return;
+          }
+          called = true;
+          done();
+        };
+        element.queryCurrent();
+      });
+    });
+
+    suite('_exchangeResponse()', function() {
+      let element;
+      let emptyResponse;
+      let dataResponse;
+      setup(function() {
+        element = fixture('basic');
+        emptyResponse = {
+          detail: {
+            response: []
+          }
+        };
+        dataResponse = {
+          detail: {
+            response: [
+              ExchangeServer.createListObject(),
+              ExchangeServer.createListObject(),
+              ExchangeServer.createListObject(),
+              ExchangeServer.createListObject()
+            ]
+          }
+        };
+      });
+
+      test('Sets noMoreResults when no data', function() {
+        element._exchangeResponse(emptyResponse);
+        assert.isTrue(element.noMoreResults);
+      });
+
+      test('Sets querying to false when no data', function() {
+        element._setQuerying(true);
+        element._exchangeResponse(emptyResponse);
+        assert.isFalse(element.querying);
+      });
+
+      test('Sets noMoreResults when data size is less than exchangeLimit', function() {
+        element._exchangeResponse(dataResponse);
+        assert.isTrue(element.noMoreResults);
+      });
+
+      test('Do not sets noMoreResults when within exchangeLimit', function() {
+        element.exchangeLimit = 4;
+        element._exchangeResponse(dataResponse);
+        assert.isFalse(element.noMoreResults);
+      });
+
+      test('Sets items property', function() {
+        element._exchangeResponse(dataResponse);
+        assert.typeOf(element.items, 'array');
+        assert.lengthOf(element.items, 4);
+      });
+
+      test('Sets exchangeOffset to size of array', function() {
+        assert.equal(element.exchangeOffset, 0);
+        element._exchangeResponse(dataResponse);
+        assert.equal(element.exchangeOffset, 4);
+        element._exchangeResponse(dataResponse);
+        assert.equal(element.exchangeOffset, 8);
+      });
+
+      test('Sets querying to false', function() {
+        element._setQuerying(true);
+        element._exchangeResponse(dataResponse);
+        assert.isFalse(element.querying);
+      });
+    });
+
+    suite('_computeQueryParams()', function() {
+      let element;
+      setup(function() {
+        element = fixture('basic');
+      });
+
+      test('Sets required properties', function() {
+        const result = element._computeQueryParams('a', 'b', 'c');
+        assert.equal(result.type, 'a');
+        assert.equal(result.limit, 'b');
+        assert.equal(result.offset, 'c');
+        assert.isUndefined(result.search);
+      });
+
+      test('Sets search if not empty', function() {
+        const result = element._computeQueryParams('a', 'b', 'c', 'd');
+        assert.equal(result.search, 'd');
+      });
+    });
+
+    suite('_getTypes()', function() {
+      let element;
+      suiteSetup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns array if empty argument', function() {
+        const result = element._getTypes();
+        assert.typeOf(result, 'array');
+        assert.lengthOf(result, 0);
+      });
+
+      test('Returns the same array as an argument', function() {
+        const arg = ['test'];
+        const result = element._getTypes(arg);
+        assert.isTrue(result === arg);
+      });
+
+      test('Returns single type', function() {
+        const arg = 'test';
+        const result = element._getTypes(arg);
+        assert.lengthOf(result, 1);
+        assert.equal(result[0], 'test');
+      });
+
+      test('Returns multiple types', function() {
+        const arg = 'rest-api,template';
+        const result = element._getTypes(arg);
+        assert.lengthOf(result, 2);
+        assert.equal(result[0], 'rest-api');
+        assert.equal(result[1], 'template');
+      });
+
+      test('Trim types', function() {
+        const arg = ' rest-api , template , connector ';
+        const result = element._getTypes(arg);
+        assert.lengthOf(result, 3);
+        assert.equal(result[0], 'rest-api');
+        assert.equal(result[1], 'template');
+        assert.equal(result[2], 'connector');
+      });
+    });
+
+    suite('_processItem()', function() {
+      let element;
+      suiteSetup(function(done) {
+        element = fixture('basic');
+        element.addEventListener('querying-changed', function clb(e) {
+          if (e.detail.value === false) {
+            element.removeEventListener('querying-changed', clb);
+            flush(() => done());
+          }
+        });
+      });
+
+      test('Dispatches process-exchange-asset-data event', function(done) {
+        const model = element.items[0];
+        element.addEventListener('process-exchange-asset-data', function clb(e) {
+          element.removeEventListener('process-exchange-asset-data', clb);
+          assert.deepEqual(e.detail, model);
+          done();
+        });
+        const item = element.shadowRoot.querySelector('exchange-search-grid-item');
+        item.requestAction();
+      });
+    });
+
+    suite('Authorization properties', function() {
+      let element;
+      setup(function() {
+        element = fixture('auth');
+      });
+
+      test('Automatically asks for access token', function(done) {
+        document.body.addEventListener('oauth2-token-requested', function clb(e) {
+          document.body.removeEventListener('oauth2-token-requested', clb);
+          const info = e.detail;
+          assert.isFalse(info.interactive);
+          done();
+        });
+      });
+
+      test('accessToken is not set', function() {
+        assert.isUndefined(element.accessToken);
+      });
+
+      test('Renders authorization button', function(done) {
+        flush(() => {
+          const button = element.shadowRoot.querySelector('.auth-button');
+          assert.ok(button, 'Button is in the DOM');
+          const display = getComputedStyle(button).display;
+          assert.notEqual(display, 'none');
+          done();
+        });
+      });
+
+      test('Sets up auth headers', function() {
+        element.accessToken = 'test';
+        const headers = element.$.query.headers;
+        assert.equal(headers.authorization, 'Bearer test');
+      });
+    });
+
+    suite('_computePanelTitle()', () => {
+      let element;
+      suiteSetup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns predefined title', () => {
+        const result = element._computePanelTitle('test-title', 'rest-api');
+        assert.equal(result, 'test-title');
+      });
+
+      [
+        ['rest-api', 'Explore REST APIs'],
+        ['connector', 'Explore connectors'],
+        ['template', 'Explore templates'],
+        ['example', 'Explore examples'],
+        ['soap-api', 'Explore SOAP APIs'],
+        ['raml-fragment', 'Explore API fragments'],
+        ['custom', 'Explore custom assets'],
+        ['template,custom', 'Explore Exchange assets']
+      ].forEach((item) => {
+        test('Returns title for ' + item[0], () => {
+          const result = element._computePanelTitle(undefined, item[0]);
+          assert.equal(result, item[1]);
+        });
+      });
+    });
+
+    suite('_typeChanged()', () => {
+      let element;
+      suiteSetup(function() {
+        element = fixture('basic');
+      });
+
+      test('Does nothing when initializing', () => {
+        let called = false;
+        element.updateSearch = () => called = true;
+        element._typeChanged('rest-api');
+        assert.isFalse(called);
+      });
+
+      test('Calls updateSearch when type chenges', () => {
+        let called = false;
+        element.updateSearch = () => called = true;
+        element._typeChanged('rest-api', 'something');
+        assert.isTrue(called);
+      });
+    });
+
+    suite('_computeColumns()', () => {
+      const auto = 'auto';
+      let element;
+      suiteSetup(function() {
+        element = fixture('basic');
+      });
+
+      test('Returns the numberic value from first argument', () => {
+        const result = element._computeColumns(100);
+        assert.equal(result, 100);
+      });
+
+      test('Returns default value', () => {
+        const result = element._computeColumns(auto);
+        assert.equal(result, 1);
+      });
+
+      test('Returns 8 when first argument is true', () => {
+        const result = element._computeColumns(auto, true);
+        assert.equal(result, 8);
+      });
+
+      test('Returns 7 when 2nd argument is true', () => {
+        const result = element._computeColumns(auto, false, true);
+        assert.equal(result, 7);
+      });
+
+      test('Returns 6 when 3rd argument is true', () => {
+        const result = element._computeColumns(auto, false, false, true);
+        assert.equal(result, 6);
+      });
+
+      test('Returns 5 when 4th argument is true', () => {
+        const result = element._computeColumns(auto, false, false, false, true);
+        assert.equal(result, 5);
+      });
+
+      test('Returns 4 when 5th argument is true', () => {
+        const result = element._computeColumns(auto, false, false, false, false, true);
+        assert.equal(result, 4);
+      });
+
+      test('Returns 3 when 6th argument is true', () => {
+        const result = element._computeColumns(auto, false, false, false, false, false, true);
+        assert.equal(result, 3);
+      });
+
+      test('Returns 2 when 7th argument is true', () => {
+        const result = element._computeColumns(auto, false, false, false, false, false, false, true);
+        assert.equal(result, 2);
+      });
+
+      test('Setting columns property sets _effectiveColumns', () => {
+        element.columns = 16;
+        assert.equal(element._effectiveColumns, 16);
+      });
+
+      test('Setting columns to auto sets _effectiveColumns', () => {
+        element.columns = 'auto';
+        assert.isAbove(element._effectiveColumns, 0);
+      });
+    });
+
+    suite('no-auto attribute', () => {
+      suiteSetup(function() {
+        ExchangeServer.createServer();
+      });
+
+      suiteTeardown(function() {
+        ExchangeServer.restore();
+      });
+
+      test('Won\'t request for data when authorization is not set', () => {
+        fixture('NoAuto');
+        assert.lengthOf(ExchangeServer.srv.requests, 0);
+      });
+
+      test('Won\'t request for data when authorization is set', () => {
+        const element = fixture('NoAutoAuth');
+        element.authInitialized = true;
+        assert.lengthOf(ExchangeServer.srv.requests, 0);
+      });
+    });
+
+    suite('_oauth2SignedIn()', () => {
+      suiteSetup(function() {
+        ExchangeServer.createServer();
+      });
+
+      suiteTeardown(function() {
+        ExchangeServer.restore();
+      });
+
+      let element;
+      setup(function() {
+        element = fixture('NoAuto');
+      });
+
+      test('Sets authInitialized to true', () => {
+        element.authInitialized = false;
+        element._oauth2SignedIn();
+        assert.isTrue(element.authInitialized);
+      });
+
+      test('Calls updateSearch() when no no-auto', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element.noAuto = false;
+        element.authInitialized = true;
+        element._oauth2SignedIn();
+        assert.isTrue(spy.called);
+      });
+
+      test('Won\'t call updateSearch() when no-auto', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element._oauth2SignedIn();
+        assert.isFalse(spy.called);
+      });
+    });
+
+    suite('_oauth2SignedOut()', () => {
+      suiteSetup(function() {
+        ExchangeServer.createServer();
+      });
+
+      suiteTeardown(function() {
+        ExchangeServer.restore();
+      });
+
+      let element;
+      setup(function() {
+        element = fixture('NoAuto');
+      });
+
+      test('Sets authInitialized to true', () => {
+        element.authInitialized = false;
+        element._oauth2SignedOut();
+        assert.isTrue(element.authInitialized);
+      });
+
+      test('Calls updateSearch() when no no-auto', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element.noAuto = false;
+        element.authInitialized = true;
+        element._oauth2SignedOut();
+        assert.isTrue(spy.called);
+      });
+
+      test('Won\'t call updateSearch() when no-auto', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element._oauth2SignedOut();
+        assert.isFalse(spy.called);
+      });
+    });
+
+    suite('_oauth2ErrorHandler()', () => {
+      suiteSetup(function() {
+        ExchangeServer.createServer();
+      });
+
+      suiteTeardown(function() {
+        ExchangeServer.restore();
+      });
+
+      let element;
+      let ev;
+      setup(function() {
+        element = fixture('NoAuto');
+        ev = {
+          detail: {
+            message: 'test-message'
+          }
+        };
+      });
+
+      test('Sets error mesage on error toast', () => {
+        element._oauth2ErrorHandler(ev);
+        assert.equal(element.$.errorToast.text, 'test-message');
+      });
+
+      test('Opens the toast', () => {
+        element._oauth2ErrorHandler(ev);
+        assert.isTrue(element.$.errorToast.opened);
+      });
+
+      test('Sets authInitialized to true', () => {
+        element.authInitialized = false;
+        element._oauth2ErrorHandler(ev);
+        assert.isTrue(element.authInitialized);
+      });
+
+      test('Calls updateSearch() when no no-auto', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element.noAuto = false;
+        element.authInitialized = false;
+        element._oauth2ErrorHandler(ev);
+        assert.isTrue(spy.called);
+      });
+
+      test('Won\'t call updateSearch() when no-auto', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element._oauth2ErrorHandler(ev);
+        assert.isFalse(spy.called);
+      });
+
+      test('Won\'t call updateSearch() when already initialized', () => {
+        const spy = sinon.spy(element, 'updateSearch');
+        element.noAuto = false;
+        element.authInitialized = true;
+        element._oauth2ErrorHandler(ev);
+        assert.isFalse(spy.called);
+      });
+    });
+  });
+
+  suite('_setupAuthHeaders()', () => {
+    let element;
+    setup(function() {
+      element = fixture('NoAuto');
+    });
+
+    test('Headers are empty when no token', () => {
+      element._setupAuthHeaders();
+      assert.deepEqual(element.$.query.headers, {});
+    });
+
+    test('Headers are set when token', () => {
+      element._setupAuthHeaders('test-token');
+      assert.equal(element.$.query.headers.authorization, 'Bearer test-token');
+    });
+  });
+
+  suite('_anypointAuthChanged()', () => {
+    let element;
+    setup(function() {
+      element = fixture('NoAuto');
+    });
+
+    test('Calls _listenOauth() when state is "true"', () => {
+      const spy = sinon.spy(element, '_listenOauth');
+      element.anypointAuth = true;
+      assert.isTrue(spy.called);
+    });
+
+    test('Calls _unlistenOauth() when state is "false"', () => {
+      element.anypointAuth = true;
+      const spy = sinon.spy(element, '_unlistenOauth');
+      element.anypointAuth = false;
+      assert.isTrue(spy.called);
+    });
+  });
+
+  suite('_searchHandler()', () => {
+    suiteSetup(function() {
+      ExchangeServer.createServer();
+    });
+
+    suiteTeardown(function() {
+      ExchangeServer.restore();
+    });
+
+    let element;
+    let ev;
+    setup(function() {
+      element = fixture('NoAuto');
+      ev = {
+        target: {
+          value: ''
+        }
+      };
+    });
+
+    test('Calls updateSearch() when no value', () => {
+      ev.target.value = 'value';
+      const spy = sinon.spy(element, 'updateSearch');
+      element._searchHandler(ev);
+      assert.isFalse(spy.called);
+    });
+
+    test('Won\'t call updateSearch() when input has value', () => {
+      const spy = sinon.spy(element, 'updateSearch');
+      element._searchHandler(ev);
+      assert.isTrue(spy.called);
+    });
+  });
+
+  suite('_searchKeydown()', () => {
+    suiteSetup(function() {
+      ExchangeServer.createServer();
+    });
+
+    suiteTeardown(function() {
+      ExchangeServer.restore();
+    });
+
+    let element;
+    let ev;
+    setup(function() {
+      element = fixture('NoAuto');
+      ev = new CustomEvent('keydown', {
+        cancelable: true
+      });
+    });
+
+    test('Won\'t call updateSearch() when no key value/keyCode', () => {
+      const spy = sinon.spy(element, 'updateSearch');
+      element._searchKeydown(ev);
+      assert.isFalse(spy.called);
+    });
+
+    test('Calls updateSearch() when key is Enter', () => {
+      ev.key = 'Enter';
+      const spy = sinon.spy(element, 'updateSearch');
+      element._searchKeydown(ev);
+      assert.isTrue(spy.called);
+    });
+
+    test('Calls updateSearch() when keyCode is 13', () => {
+      ev.keyCode = 13;
+      const spy = sinon.spy(element, 'updateSearch');
+      element._searchKeydown(ev);
+      assert.isTrue(spy.called);
+    });
+
+    test('Calls updateSearch() when which is 13', () => {
+      ev.which = 13;
+      const spy = sinon.spy(element, 'updateSearch');
+      element._searchKeydown(ev);
+      assert.isTrue(spy.called);
+    });
+
+    test('Event is cancelled', () => {
+      ev.which = 13;
+      element._searchKeydown(ev);
+      assert.isTrue(ev.defaultPrevented);
+    });
+  });
+
+  suite('_exchangeResponseError()', () => {
+    let element;
+    let ev;
+    setup(function(done) {
+      element = fixture('NoAuto');
+      ev = new CustomEvent('error', {
+        cancelable: true,
+        detail: {
+          request: {
+            status: 200
+          }
+        }
+      });
+      flush(() => done());
+    });
+
+    test('Re-sets querying', () => {
+      element._exchangeResponseError(ev);
+      assert.isFalse(element.querying);
+    });
+
+    test('Query error is opened', () => {
+      element._exchangeResponseError(ev);
+      assert.isTrue(element.$.errorToast.opened);
+      assert.equal(element.$.errorToast.text, 'Unable to get data from Exchange.');
+    });
+
+    test('Status 401 - not signed in', () => {
+      ev.detail.request.status = 401;
+      element.accessToken = 'test';
+      element._exchangeResponseError(ev);
+      assert.equal(element.accessToken, 'test');
+    });
+
+    test('Status 401 - signed in', () => {
+      ev.detail.request.status = 401;
+      element.accessToken = 'test';
+      element.signedIn = 'test';
+      element._exchangeResponseError(ev);
+      assert.isTrue(element.$.tokenExpired.opened);
+      assert.isUndefined(element.accessToken);
+      assert.isFalse(element.signedIn);
+    });
+  });
+
+  suite('_enableGrid()', () => {
+    let element;
+    setup(function(done) {
+      element = fixture('NoAuto');
+      flush(() => done());
+    });
+
+    test('Sets listView false', () => {
+      element.listView = true;
+      element._enableGrid();
+      assert.isFalse(element.listView);
+    });
+
+    test('Activates grid toggle button', () => {
+      element.listView = false;
+      const toggle = element.shadowRoot.querySelector('[data-action="grid-enable"]');
+      toggle.active = false;
+      element._enableGrid();
+      assert.isTrue(toggle.active);
+    });
+  });
+
+  suite('_enableList()', () => {
+    let element;
+    setup(function(done) {
+      element = fixture('NoAuto');
+      flush(() => done());
+    });
+
+    test('Sets listView true', () => {
+      element.listView = false;
+      element._enableList();
+      assert.isTrue(element.listView);
+    });
+
+    test('Activates grid toggle button', () => {
+      element.listView = true;
+      const toggle = element.shadowRoot.querySelector('[data-action="list-enable"]');
+      toggle.active = false;
+      element._enableList();
+      assert.isTrue(toggle.active);
+    });
+  });
+
+  suite('_findRootTarget()', () => {
+    let element;
+    setup(function(done) {
+      element = fixture('NoAuto');
+      flush(() => done());
+    });
+
+    test('Returns an element', () => {
+      const result = element._findRootTarget();
+      assert.isTrue(result instanceof Document);
+    });
+  });
+
+  suite('_scrollTargetChanged()', () => {
+    let element;
+    setup(function(done) {
+      element = fixture('NoAuto');
+      flush(() => done());
+    });
+
+    test('Handles scrollTarget being "document"', () => {
+      element.scrollTarget = 'document';
+      assert.isTrue(element.scrollTarget === document.documentElement);
+    });
+  });
+  </script>
+</body>
+</html>

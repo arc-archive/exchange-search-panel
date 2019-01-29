@@ -11,53 +11,29 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../arc-icons/arc-icons.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../paper-styles/shadow.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../paper-item/paper-item.html">
-<link rel="import" href="../paper-rating/paper-rating.html">
-<link rel="import" href="exchange-search-item-behavior.html">
-<!--
-`<exchange-search-grid-item>` Displays a single grid item for Exchange
-search rersults panel.
-
-### Example
-```
-<exchange-search-grid-item item="{...}" on-download="..."></exchange-search-grid-item>
-```
-
-### Styling
-`<exchange-search-grid-item>` provides the following custom properties and mixins for styling:
-
-Custom property | Description | Default
-----------------|-------------|----------
-`--exchange-search-grid-item` | Mixin applied to the element | `{}`
-`--exchange-search-grid-item-action-button` | Mixin applied to the visible accrion button | `{}`
-`--exchange-search-grid-item-card-background-color` | Background color of the card item | `#fff`
-`--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
-`--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
-`--exchange-search-grid-item-tags-line` | Mixin applied to the tags container | `{}`
-
-@group UI Elements
-@element exchange-search-grid-item
-@demo demo/index.html
--->
+<link rel="import" href="../star-rating/star-rating.html">
+<link rel="import" href="exchange-search-item-mixin.html">
 <dom-module id="exchange-search-grid-item">
   <template>
     <style>
     :host {
       display: block;
       @apply --arc-font-body1;
-      color: rgba(0, 0, 0, 0.87);
+      @apply --shadow-elevation-4dp;
+      color: var(--exchange-search-panel-item-card-color, inherit);
+      background-color: var(--exchange-search-panel-item-background-color, #fff);
       @apply --exchange-search-grid-item;
     }
 
     h3 {
-      font-size: 16px;
-      font-weight: 400;
+      @apply --paper-font-subhead;
       padding: 0;
       margin: 0;
       margin-left: 8px;
@@ -69,16 +45,23 @@ Custom property | Description | Default
     }
 
     .card {
-      @apply --shadow-elevation-4dp;
-      padding: 12px;
       min-width: 140px;
-      background-color: var(--exchange-search-grid-item-card-background-color, #fff);
+      padding: 12px;
+      height: 100%;
+      box-sizing: border-box;
+      @apply --layout-vertical;
+    }
+
+    .content {
+      @apply --layout-flex;
     }
 
     .api-icon {
-      width: 36px;
-      height: 36px;
-      color: #73cfee;
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      color: var(--raml-icon-color, #73cfee);
     }
 
     .open-button {
@@ -90,7 +73,7 @@ Custom property | Description | Default
     }
 
     .creator {
-      color: rgba(0, 0, 0, 0.64);
+      color: var(--exchange-search-list-item-author-color, rgba(0, 0, 0, 0.64));
     }
 
     .tags-line {
@@ -99,31 +82,68 @@ Custom property | Description | Default
       overflow: hidden;
       @apply --exchange-search-grid-item-tags-line;
     }
+
+    star-rating {
+      --iron-icon-height: 20px;
+      --iron-icon-width: 20px;
+      display: inline-block;
+    }
     </style>
     <div class="card">
-      <div class="title">
-        <iron-icon icon="[[_computeIconIcon(item)]]" class="api-icon" src="[[_computeIconSrc(item)]]"></iron-icon>
-        <h3>[[item.name]]</h3>
-      </div>
-      <p class="creator">by [[item.organization.name]]</p>
-      <template is="dom-if" if="[[hasTags]]">
-        <p class="tags-line">
-          <span class="tag-label">Tags:</span>
-          <span class="tag-value">[[tags]]</span>
-        </p>
-      </template>
-      <div class="rating">
-        <paper-rating rating="[[item.rating]]" icon="arc:star" disabled title$="Api raiting: [[item.rating]]/5"></paper-rating>
-      </div>
+      <section class="content">
+        <div class="title">
+          <iron-icon icon="[[_computeIconIcon(item)]]" class="api-icon" src="[[_computeIconSrc(item)]]"></iron-icon>
+          <h3>[[item.name]]</h3>
+        </div>
+        <p class="creator">by [[item.organization.name]]</p>
+        <template is="dom-if" if="[[hasTags]]">
+          <p class="tags-line">
+            <span class="tag-label">Tags:</span>
+            <span class="tag-value">[[tags]]</span>
+          </p>
+        </template>
+        <div class="rating">
+          <star-rating rating="[[item.rating]]" read-only title$="Api raiting: [[item.rating]]/5"></star-rating>
+        </div>
+      </section>
       <div class="actions">
         <paper-button noink="[[noink]]" on-tap="requestAction" class="open-button">[[actionLabel]]</paper-button>
       </div>
     </div>
   </template>
   <script>
-  Polymer({
-    is: 'exchange-search-grid-item',
-    behaviors: [ArcBehaviors.ExchangeSearchItemBehavior]
-  });
+  /**
+   * `<exchange-search-grid-item>` Displays a single grid item for Exchange
+   * search rersults panel.
+   *
+   * ### Example
+   *
+   * ```html
+   * <exchange-search-grid-item item="{...}" on-download="..."></exchange-search-grid-item>
+   * ```
+   *
+   * ### Styling
+   *
+   * `<exchange-search-grid-item>` provides the following custom properties and mixins for styling:
+   *
+   * Custom property | Description | Default
+   * ----------------|-------------|----------
+   * `--exchange-search-grid-item` | Mixin applied to the element | `{}`
+   * `--exchange-search-grid-item-action-button` | Mixin applied to the visible accrion button | `{}`
+   * `--exchange-search-grid-item-card-background-color` | Background color of the card item | `#fff`
+   * `--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
+   * `--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
+   * `--exchange-search-grid-item-tags-line` | Mixin applied to the tags container | `{}`
+   *
+   * @customElement
+   * @polymer
+   * @demo demo/index.html
+   * @appliesMixin ArcBehaviors.ExchangeSearchItemMixin
+   * @memberof UiElements
+   */
+  class ExchangeSearchGridItem extends ArcBehaviors.ExchangeSearchItemMixin(Polymer.Element) {
+    static get is() {return 'exchange-search-grid-item';}
+  }
+  window.customElements.define(ExchangeSearchGridItem.is, ExchangeSearchGridItem);
   </script>
 </dom-module>

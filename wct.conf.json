@@ -8,10 +8,6 @@
     "sauce": {
       "disabled": true,
       "browsers": [{
-        "browserName": "internet explorer",
-        "platform": "Windows 7",
-        "version": "11.0"
-      }, {
         "browserName": "microsoftedge",
         "platform": "Windows 10",
         "version": ""
@@ -20,9 +16,17 @@
         "platform": "Windows 10",
         "version": "latest-4"
       }, {
+        "browserName": "firefox",
+        "platform": "Windows 10",
+        "version": "latest"
+      }, {
         "browserName": "chrome",
         "platform": "Windows 10",
         "version": "latest-4"
+      }, {
+        "browserName": "chrome",
+        "platform": "Windows 10",
+        "version": "latest"
       }, {
         "browserName": "safari",
         "platform": "macOS 10.12",
@@ -30,8 +34,28 @@
       }, {
         "browserName": "safari",
         "platform": "macOS 10.13",
-        "version": "11.0"
+        "version": "11.1"
       }]
+    },
+    "istanbub": {
+      "dir": "./coverage",
+      "reporters": ["text-summary", "lcov"],
+      "include": [
+        "**/*.html"
+      ],
+      "exclude": [
+        "**/test/**",
+        "**/demo/**",
+        "**/tasks/**"
+      ],
+      "thresholds": {
+        "global": {
+          "statements": 80,
+          "branches": 80,
+          "functions": 90,
+          "lines": 80
+        }
+      }
     }
   }
 }
