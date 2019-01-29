@@ -94,3 +94,30 @@
 
 
 
+# [2.0.0](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.2.3...2.0.0) (2019-01-29)
+
+
+### Breaking
+
+* Refactoring `assetType` to more HTML friendly name `type` ([4d97f9a2845fff0633c1c2dfba402e28d34385c9](https://github.com/advanced-rest-client/exchange-search-panel/commit/4d97f9a2845fff0633c1c2dfba402e28d34385c9))
+
+### Docs
+
+* Updating polymer doc ([c28d29b5ceef4ff3038a27cb39abadccb49b0890](https://github.com/advanced-rest-client/exchange-search-panel/commit/c28d29b5ceef4ff3038a27cb39abadccb49b0890))
+* Updating Polymer docs and typpings ([9a628faff53aec5d4383aa44e7594cf8c09a4ead](https://github.com/advanced-rest-client/exchange-search-panel/commit/9a628faff53aec5d4383aa44e7594cf8c09a4ead))
+
+### Fix
+
+* `event` is undefined ([d9648b91853b773148cd576c9941df4aaf001918](https://github.com/advanced-rest-client/exchange-search-panel/commit/d9648b91853b773148cd576c9941df4aaf001918))
+* Fixing scroll target handling ([e84e04e25ed46ce90a25055e868b2f80b816c01a](https://github.com/advanced-rest-client/exchange-search-panel/commit/e84e04e25ed46ce90a25055e868b2f80b816c01a))
+
+### New
+
+* Adding support for "auto" value in columns. ([6796b0f95c7ba125f9022777d46c42ebfe7f8a9e](https://github.com/advanced-rest-client/exchange-search-panel/commit/6796b0f95c7ba125f9022777d46c42ebfe7f8a9e))
+
+### Update
+
+* Adding customizartion for panel title and anabling type change ([bf989fd43ca5ce71961ddac9c48361d3c4117a4d](https://github.com/advanced-rest-client/exchange-search-panel/commit/bf989fd43ca5ce71961ddac9c48361d3c4117a4d))
+
+
+
