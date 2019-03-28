@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,20 +10,50 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer-element.html">
-<link rel="import" href="../arc-icons/arc-icons.html">
-<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../paper-styles/shadow.html">
-<link rel="import" href="../paper-button/paper-button.html">
-<link rel="import" href="../iron-icon/iron-icon.html">
-<link rel="import" href="../paper-item/paper-item.html">
-<link rel="import" href="../paper-item/paper-icon-item.html">
-<link rel="import" href="../paper-item/paper-item-body.html">
-<link rel="import" href="../star-rating/star-rating.html">
-<link rel="import" href="exchange-search-item-mixin.html">
-<dom-module id="exchange-search-list-item">
-  <template>
+*/
+import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+import {html} from '../../@polymer/polymer/lib/utils/html-tag.js';
+import '../../@advanced-rest-client/arc-icons/arc-icons.js';
+import '../../@polymer/iron-flex-layout/iron-flex-layout.js';
+import '../../@polymer/paper-styles/shadow.js';
+import '../../@polymer/paper-button/paper-button.js';
+import '../../@polymer/iron-icon/iron-icon.js';
+import '../../@polymer/paper-item/paper-item.js';
+import '../../@polymer/paper-item/paper-icon-item.js';
+import '../../@polymer/paper-item/paper-item-body.js';
+import '../../@advanced-rest-client/star-rating/star-rating.js';
+import {ExchangeSearchItemMixin} from './exchange-search-item-mixin.js';
+/**
+ * `<exchange-search-list-item>` Displays a single list item for Exchange
+ * search rersults panel.
+ *
+ * ### Example
+ *
+ * ```html
+ * <exchange-search-list-item item="{...}" on-download="..."></exchange-search-list-item>
+ * ```
+ *
+ * ### Styling
+ *
+ * `<exchange-search-list-item>` provides the following custom properties and mixins for styling:
+ *
+ * Custom property | Description | Default
+ * ----------------|-------------|----------
+ * `--exchange-search-list-item` | Mixin applied to the element | `{}`
+ * `--exchange-search-list-item-action-button` | Mixin applied to the visible accrion button | `{}`
+ * `--exchange-search-list-item-card-background-color` | Background color of the card item | `#fff`
+ * `--rating-icon-color` | Color of the rating icons when highlighted | `--primary-text-color`
+ * `--rating-unselected-opacity` | Color of the rating icons when not highlighted | `0.4`
+ *
+ * @customElement
+ * @polymer
+ * @demo demo/index.html
+ * @appliesMixin ExchangeSearchItemMixin
+ * @memberof UiElements
+ */
+class ExchangeSearchListItem extends ExchangeSearchItemMixin(PolymerElement) {
+  static get template() {
+    return html`
     <style>
     :host {
       @apply --arc-font-body1;
@@ -98,13 +128,17 @@ the License.
     }
     </style>
     <paper-icon-item>
-      <iron-icon icon="[[_computeIconIcon(item)]]" slot="item-icon" class="api-icon" src="[[_computeIconSrc(item)]]"></iron-icon>
-      <paper-item-body two-line>
+      <iron-icon
+        icon="[[_computeIconIcon(item)]]"
+        slot="item-icon"
+        class="api-icon"
+        src="[[_computeIconSrc(item)]]"></iron-icon>
+      <paper-item-body two-line="">
         <div class="top-line">
           <h3>[[item.name]]</h3>
-          <star-rating rating="[[item.rating]]" read-only title$="Api raiting: [[item.rating]]/5"></star-rating>
+          <star-rating rating="[[item.rating]]" read-only="" title\$="Api raiting: [[item.rating]]/5"></star-rating>
         </div>
-        <div secondary class="details">
+        <div secondary="" class="details">
           <p class="meta creator">by [[item.organization.name]]</p>
           <template is="dom-if" if="[[hasTags]]">
             <p class="meta tags-line">
@@ -116,39 +150,7 @@ the License.
       </paper-item-body>
       <paper-button noink="[[noink]]" on-tap="requestAction" class="open-button">[[actionLabel]]</paper-button>
     </paper-icon-item>
-  </template>
-  <script>
-  /**
-   * `<exchange-search-list-item>` Displays a single list item for Exchange
-   * search rersults panel.
-   *
-   * ### Example
-   *
-   * ```html
-   * <exchange-search-list-item item="{...}" on-download="..."></exchange-search-list-item>
-   * ```
-   *
-   * ### Styling
-   *
-   * `<exchange-search-list-item>` provides the following custom properties and mixins for styling:
-   *
-   * Custom property | Description | Default
-   * ----------------|-------------|----------
-   * `--exchange-search-list-item` | Mixin applied to the element | `{}`
-   * `--exchange-search-list-item-action-button` | Mixin applied to the visible accrion button | `{}`
-   * `--exchange-search-list-item-card-background-color` | Background color of the card item | `#fff`
-   * `--rating-icon-color` | Color of the rating icons when highlighted | `--primary-text-color`
-   * `--rating-unselected-opacity` | Color of the rating icons when not highlighted | `0.4`
-   *
-   * @customElement
-   * @polymer
-   * @demo demo/index.html
-   * @appliesMixin ArcBehaviors.ExchangeSearchItemMixin
-   * @memberof UiElements
-   */
-  class ExchangeSearchListItem extends ArcBehaviors.ExchangeSearchItemMixin(Polymer.Element) {
-    static get is() {return 'exchange-search-list-item';}
+`;
   }
-  window.customElements.define(ExchangeSearchListItem.is, ExchangeSearchListItem);
-  </script>
-</dom-module>
+}
+window.customElements.define('exchange-search-list-item', ExchangeSearchListItem);

@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,18 +10,49 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/polymer-element.html">
-<link rel="import" href="../arc-icons/arc-icons.html">
-<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../paper-styles/shadow.html">
-<link rel="import" href="../paper-button/paper-button.html">
-<link rel="import" href="../iron-icon/iron-icon.html">
-<link rel="import" href="../paper-item/paper-item.html">
-<link rel="import" href="../star-rating/star-rating.html">
-<link rel="import" href="exchange-search-item-mixin.html">
-<dom-module id="exchange-search-grid-item">
-  <template>
+*/
+import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+import {html} from '../../@polymer/polymer/lib/utils/html-tag.js';
+import '../../@advanced-rest-client/arc-icons/arc-icons.js';
+import '../../@polymer/iron-flex-layout/iron-flex-layout.js';
+import '../../@polymer/paper-styles/shadow.js';
+import '../../@polymer/paper-button/paper-button.js';
+import '../../@polymer/iron-icon/iron-icon.js';
+import '../../@polymer/paper-item/paper-item.js';
+import '../../@advanced-rest-client/star-rating/star-rating.js';
+import {ExchangeSearchItemMixin} from './exchange-search-item-mixin.js';
+/**
+ * `<exchange-search-grid-item>` Displays a single grid item for Exchange
+ * search rersults panel.
+ *
+ * ### Example
+ *
+ * ```html
+ * <exchange-search-grid-item item="{...}" on-download="..."></exchange-search-grid-item>
+ * ```
+ *
+ * ### Styling
+ *
+ * `<exchange-search-grid-item>` provides the following custom properties and mixins for styling:
+ *
+ * Custom property | Description | Default
+ * ----------------|-------------|----------
+ * `--exchange-search-grid-item` | Mixin applied to the element | `{}`
+ * `--exchange-search-grid-item-action-button` | Mixin applied to the visible accrion button | `{}`
+ * `--exchange-search-grid-item-card-background-color` | Background color of the card item | `#fff`
+ * `--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
+ * `--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
+ * `--exchange-search-grid-item-tags-line` | Mixin applied to the tags container | `{}`
+ *
+ * @customElement
+ * @polymer
+ * @demo demo/index.html
+ * @appliesMixin ExchangeSearchItemMixin
+ * @memberof UiElements
+ */
+class ExchangeSearchGridItem extends ExchangeSearchItemMixin(PolymerElement) {
+  static get template() {
+    return html`
     <style>
     :host {
       display: block;
@@ -103,47 +134,14 @@ the License.
           </p>
         </template>
         <div class="rating">
-          <star-rating rating="[[item.rating]]" read-only title$="Api raiting: [[item.rating]]/5"></star-rating>
+          <star-rating rating="[[item.rating]]" read-only="" title\$="Api raiting: [[item.rating]]/5"></star-rating>
         </div>
       </section>
       <div class="actions">
         <paper-button noink="[[noink]]" on-tap="requestAction" class="open-button">[[actionLabel]]</paper-button>
       </div>
     </div>
-  </template>
-  <script>
-  /**
-   * `<exchange-search-grid-item>` Displays a single grid item for Exchange
-   * search rersults panel.
-   *
-   * ### Example
-   *
-   * ```html
-   * <exchange-search-grid-item item="{...}" on-download="..."></exchange-search-grid-item>
-   * ```
-   *
-   * ### Styling
-   *
-   * `<exchange-search-grid-item>` provides the following custom properties and mixins for styling:
-   *
-   * Custom property | Description | Default
-   * ----------------|-------------|----------
-   * `--exchange-search-grid-item` | Mixin applied to the element | `{}`
-   * `--exchange-search-grid-item-action-button` | Mixin applied to the visible accrion button | `{}`
-   * `--exchange-search-grid-item-card-background-color` | Background color of the card item | `#fff`
-   * `--paper-rating-active-color` | Color of the rating icons when highlighted | `--accent-color`
-   * `--paper-rating-inactive-color` | Color of the rating icons when not highlighted | `--disabled-text-color`
-   * `--exchange-search-grid-item-tags-line` | Mixin applied to the tags container | `{}`
-   *
-   * @customElement
-   * @polymer
-   * @demo demo/index.html
-   * @appliesMixin ArcBehaviors.ExchangeSearchItemMixin
-   * @memberof UiElements
-   */
-  class ExchangeSearchGridItem extends ArcBehaviors.ExchangeSearchItemMixin(Polymer.Element) {
-    static get is() {return 'exchange-search-grid-item';}
+`;
   }
-  window.customElements.define(ExchangeSearchGridItem.is, ExchangeSearchGridItem);
-  </script>
-</dom-module>
+}
+window.customElements.define('exchange-search-grid-item', ExchangeSearchGridItem);

@@ -5,27 +5,12 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   exchange-search-panel.html
+ *   exchange-search-panel.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
-
-/// <reference path="../polymer/types/polymer-element.d.ts" />
-/// <reference path="../paper-toast/paper-toast.d.ts" />
-/// <reference path="../paper-progress/paper-progress.d.ts" />
-/// <reference path="../paper-button/paper-button.d.ts" />
-/// <reference path="../arc-icons/arc-icons.d.ts" />
-/// <reference path="../paper-icon-button/paper-icon-button.d.ts" />
-/// <reference path="../paper-input/paper-input-container.d.ts" />
-/// <reference path="../iron-input/iron-input.d.ts" />
-/// <reference path="../iron-flex-layout/iron-flex-layout.d.ts" />
-/// <reference path="../iron-ajax/iron-ajax.d.ts" />
-/// <reference path="../anypoint-signin/anypoint-signin.d.ts" />
-/// <reference path="../iron-media-query/iron-media-query.d.ts" />
-/// <reference path="exchange-search-grid-item.d.ts" />
-/// <reference path="exchange-search-list-item.d.ts" />
 
 declare namespace UiElements {
 
@@ -76,7 +61,7 @@ declare namespace UiElements {
    * `--action-button-hover` | Mixin applied to the "load more" button when hovered | `{}`
    * `--exchange-search-panel-list` | Mixin applied to the list element | `{}`
    */
-  class ExchangeSearchPanel extends Polymer.Element {
+  class ExchangeSearchPanel extends PolymerElement {
 
     /**
      * The default scroll target.
@@ -400,6 +385,11 @@ declare namespace UiElements {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "exchange-search-panel": UiElements.ExchangeSearchPanel;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "exchange-search-panel": UiElements.ExchangeSearchPanel;
+  }
 }
+
+export {};

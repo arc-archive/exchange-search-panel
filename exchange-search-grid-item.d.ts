@@ -5,21 +5,13 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   exchange-search-grid-item.html
+ *   exchange-search-grid-item.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-/// <reference path="../polymer/types/polymer-element.d.ts" />
-/// <reference path="../arc-icons/arc-icons.d.ts" />
-/// <reference path="../iron-flex-layout/iron-flex-layout.d.ts" />
-/// <reference path="../paper-styles/shadow.d.ts" />
-/// <reference path="../paper-button/paper-button.d.ts" />
-/// <reference path="../iron-icon/iron-icon.d.ts" />
-/// <reference path="../paper-item/paper-item.d.ts" />
-/// <reference path="../star-rating/star-rating.d.ts" />
-/// <reference path="exchange-search-item-mixin.d.ts" />
+import {ExchangeSearchItemMixin} from './exchange-search-item-mixin.js';
 
 declare namespace UiElements {
 
@@ -47,11 +39,14 @@ declare namespace UiElements {
    * `--exchange-search-grid-item-tags-line` | Mixin applied to the tags container | `{}`
    */
   class ExchangeSearchGridItem extends
-    ArcBehaviors.ExchangeSearchItemMixin(
+    ExchangeSearchItemMixin(
     Object) {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "exchange-search-grid-item": UiElements.ExchangeSearchGridItem;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "exchange-search-grid-item": UiElements.ExchangeSearchGridItem;
+  }
 }

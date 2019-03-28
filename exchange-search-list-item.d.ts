@@ -5,23 +5,13 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   exchange-search-list-item.html
+ *   exchange-search-list-item.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-/// <reference path="../polymer/types/polymer-element.d.ts" />
-/// <reference path="../arc-icons/arc-icons.d.ts" />
-/// <reference path="../iron-flex-layout/iron-flex-layout.d.ts" />
-/// <reference path="../paper-styles/shadow.d.ts" />
-/// <reference path="../paper-button/paper-button.d.ts" />
-/// <reference path="../iron-icon/iron-icon.d.ts" />
-/// <reference path="../paper-item/paper-item.d.ts" />
-/// <reference path="../paper-item/paper-icon-item.d.ts" />
-/// <reference path="../paper-item/paper-item-body.d.ts" />
-/// <reference path="../star-rating/star-rating.d.ts" />
-/// <reference path="exchange-search-item-mixin.d.ts" />
+import {ExchangeSearchItemMixin} from './exchange-search-item-mixin.js';
 
 declare namespace UiElements {
 
@@ -48,11 +38,14 @@ declare namespace UiElements {
    * `--rating-unselected-opacity` | Color of the rating icons when not highlighted | `0.4`
    */
   class ExchangeSearchListItem extends
-    ArcBehaviors.ExchangeSearchItemMixin(
+    ExchangeSearchItemMixin(
     Object) {
   }
 }
 
-interface HTMLElementTagNameMap {
-  "exchange-search-list-item": UiElements.ExchangeSearchListItem;
+declare global {
+
+  interface HTMLElementTagNameMap {
+    "exchange-search-list-item": UiElements.ExchangeSearchListItem;
+  }
 }

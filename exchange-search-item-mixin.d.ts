@@ -5,16 +5,16 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   exchange-search-item-mixin.html
+ *   exchange-search-item-mixin.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 // tslint:disable:no-any describes the API as best we are able today
 
-/// <reference path="../polymer/types/lib/utils/mixin.d.ts" />
+export {ExchangeSearchItemMixin};
 
-declare namespace ArcBehaviors {
+declare namespace ArcMixins {
 
 
   /**
@@ -58,12 +58,12 @@ declare namespace ArcBehaviors {
     /**
      * Computes tags label value form item's tags
      */
-    _computeTags(record: any): any;
+    _computeTags(record: object|null): String|null;
 
     /**
      * Computes `hasTags` property.
      */
-    _computeHasTags(tags: any): any;
+    _computeHasTags(tags: any|null): Boolean|null;
 
     /**
      * Computes value for `iron-icon` src property from current item.
@@ -82,3 +82,5 @@ declare namespace ArcBehaviors {
     requestAction(): void;
   }
 }
+
+export {ExchangeSearchItemMixinConstructor};

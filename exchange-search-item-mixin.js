@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,25 +10,16 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
-<link rel="import" href="../polymer/lib/utils/mixin.html">
-<script>
-(function(global) {
-'use strict';
-if (!global.ArcBehaviors) {
-  /**
-   * @namespace ArcBehaviors
-   */
-  global.ArcBehaviors = {};
-}
+*/
+import {dedupingMixin} from '../../@polymer/polymer/lib/utils/mixin.js';
 /**
  * A common properties and methods for exchange view list/grid items
  *
  * @polymer
  * @mixinFunction
- * @memberof ArcBehaviors
+ * @memberof ArcMixins
  */
-ArcBehaviors.ExchangeSearchItemMixin = Polymer.dedupingMixin((base) => {
+export const ExchangeSearchItemMixin = dedupingMixin((base) => {
   /**
    * @polymer
    * @mixinClass
@@ -71,6 +62,8 @@ ArcBehaviors.ExchangeSearchItemMixin = Polymer.dedupingMixin((base) => {
     }
     /**
      * Computes tags label value form item's tags
+     * @param {Object} record
+     * @return {String}
      */
     _computeTags(record) {
       if (!record || !record.base || !record.base.tags) {
@@ -84,6 +77,8 @@ ArcBehaviors.ExchangeSearchItemMixin = Polymer.dedupingMixin((base) => {
     }
     /**
      * Computes `hasTags` property.
+     * @param {any} tags
+     * @return {Boolean}
      */
     _computeHasTags(tags) {
       return !!tags;
@@ -119,5 +114,3 @@ ArcBehaviors.ExchangeSearchItemMixin = Polymer.dedupingMixin((base) => {
   }
   return ESImixin;
 });
-})(window);
-</script>

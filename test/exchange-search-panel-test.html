@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
   <title>exchange-search-panel test</title>
-  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../../web-component-tester/browser.js"></script>
-  <script src="../../iron-test-helpers/test-helpers.js"></script>
-  <script src="../../iron-test-helpers/mock-interactions.js"></script>
-  <script src="../../chance/dist/chance.min.js"></script>
-  <script src="exchange-server-helper.js"></script>
-  <link rel="import" href="../exchange-search-panel.html">
+
+  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../@polymer/test-fixture/test-fixture.js"></script>
+  <script src="../../../mocha/mocha.js"></script>
+  <script src="../../../chai/chai.js"></script>
+  <script src="../../../wct-mocha/wct-mocha.js"></script>
+
 </head>
 <body>
   <test-fixture id="basic">
@@ -37,8 +37,10 @@
     </template>
   </test-fixture>
 
-  <script>
-  /* global ExchangeServer, sinon */
+  <script type="module">
+  import '../exchange-search-panel.js';
+  import sinon from '../../../sinon/pkg/sinon-esm.js';
+  import {ExchangeServer} from './exchange-server-helper.js';
   suite('basic with auto opened', function() {
     suiteSetup(function() {
       ExchangeServer.createServer();

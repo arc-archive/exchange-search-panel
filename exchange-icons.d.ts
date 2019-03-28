@@ -11,5 +11,3 @@
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-/// <reference path="../iron-iconset-svg/iron-iconset-svg.d.ts" />
-
