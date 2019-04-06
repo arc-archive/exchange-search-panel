@@ -381,7 +381,7 @@ class ExchangeSearchPanel extends PolymerElement {
        */
       exchangeSearchUri: {
         type: String,
-        value: 'https://anypoint.mulesoft.com/exchange/api/v1/assets'
+        value: 'https://anypoint.mulesoft.com/exchange/api/v2/assets'
       },
       /**
        * Computed value of query parameters to be sent to Exchange's API

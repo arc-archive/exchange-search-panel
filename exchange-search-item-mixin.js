@@ -37,21 +37,6 @@ export const ExchangeSearchItemMixin = dedupingMixin((base) => {
          */
         noink: Boolean,
         /**
-         * Computed value from `item` property.
-         * List of tags to display.
-         */
-        tags: {
-          type: Array,
-          computed: '_computeTags(item.*)'
-        },
-        /**
-         * Computed value, true if the API item has tags.
-         */
-        hasTags: {
-          type: Boolean,
-          computed: '_computeHasTags(tags)'
-        },
-        /**
          * Main action button of an item.
          */
         actionLabel: {
@@ -59,29 +44,6 @@ export const ExchangeSearchItemMixin = dedupingMixin((base) => {
           value: 'Download'
         }
       };
-    }
-    /**
-     * Computes tags label value form item's tags
-     * @param {Object} record
-     * @return {String}
-     */
-    _computeTags(record) {
-      if (!record || !record.base || !record.base.tags) {
-        return '';
-      }
-      const has = !!(record.base.tags.length);
-      if (!has) {
-        return '';
-      }
-      return record.base.tags.map((item) => item.value).join(', ');
-    }
-    /**
-     * Computes `hasTags` property.
-     * @param {any} tags
-     * @return {Boolean}
-     */
-    _computeHasTags(tags) {
-      return !!tags;
     }
     // Computes value for `iron-icon` src property from current item.
     _computeIconSrc(item) {

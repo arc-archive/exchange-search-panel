@@ -149,8 +149,7 @@ class ExchangeSearchListItem extends ExchangeSearchItemMixin(PolymerElement) {
         </div>
       </paper-item-body>
       <paper-button noink="[[noink]]" on-tap="requestAction" class="open-button">[[actionLabel]]</paper-button>
-    </paper-icon-item>
-`;
+    </paper-icon-item>`;
   }
 }
 window.customElements.define('exchange-search-list-item', ExchangeSearchListItem);
