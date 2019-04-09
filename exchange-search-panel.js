@@ -311,9 +311,6 @@ class ExchangeSearchPanel extends PolymerElement {
 `;
   }
 
-  static get is() {
-    return 'exchange-search-panel';
-  }
   static get properties() {
     return {
       /**
@@ -996,4 +993,4 @@ class ExchangeSearchPanel extends PolymerElement {
    * then this value is always `true`.
    */
 }
-window.customElements.define(ExchangeSearchPanel.is, ExchangeSearchPanel);
+window.customElements.define('exchange-search-panel', ExchangeSearchPanel);
