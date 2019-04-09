@@ -80,7 +80,7 @@
       test('queryParams is computed', function() {
         const p = element.queryParams;
         assert.typeOf(p, 'object');
-        assert.equal(p.type, element.type, 'type is set');
+        assert.deepEqual(p.types, ['rest-api'], 'types is set');
         assert.equal(p.limit, element.exchangeLimit, 'limit is set');
         assert.equal(p.offset, element.exchangeOffset, 'offset is set');
         assert.isUndefined(p.search, 'search is undefined');
@@ -90,7 +90,7 @@
         element.query = 'test';
         const p = element.queryParams;
         assert.typeOf(p, 'object');
-        assert.equal(p.type, element.type, 'type is set');
+        assert.deepEqual(p.types, ['rest-api'], 'type is set');
         assert.equal(p.limit, element.exchangeLimit, 'limit is set');
         assert.equal(p.offset, element.exchangeOffset, 'offset is set');
         assert.equal(p.search, element.query, 'search is set');
@@ -380,7 +380,7 @@
 
       test('Sets required properties', function() {
         const result = element._computeQueryParams('a', 'b', 'c');
-        assert.equal(result.type, 'a');
+        assert.equal(result.types, 'a');
         assert.equal(result.limit, 'b');
         assert.equal(result.offset, 'c');
         assert.isUndefined(result.search);
@@ -993,6 +993,24 @@
     test('Handles scrollTarget being "document"', () => {
       element.scrollTarget = 'document';
       assert.isTrue(element.scrollTarget === document.documentElement);
+    });
+  });
+
+  suite('_computeDefaultIcon()', () => {
+    let element;
+    setup(function(done) {
+      element = fixture('NoAuto');
+      flush(() => done());
+    });
+
+    test('Returns raml icon for rest-api', () => {
+      const result = element._computeDefaultIcon('rest-api');
+      assert.equal(result, 'arc:raml-r');
+    });
+
+    test('Returns exchange icon for other types', () => {
+      const result = element._computeDefaultIcon('connector');
+      assert.equal(result, 'exchange:exchange');
     });
   });
   </script>

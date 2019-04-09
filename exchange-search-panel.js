@@ -271,14 +271,16 @@ class ExchangeSearchPanel extends PolymerElement {
             item="[[item]]"
             on-action-requested="_processItem"
             noink="[[noink]]"
-            action-label="[[actionLabel]]"></exchange-search-grid-item>
+            action-label="[[actionLabel]]"
+            default-icon="[[_defaultIcon]]"></exchange-search-grid-item>
         </template>
         <template is="dom-if" if="[[listView]]" restamp="true">
           <exchange-search-list-item
             item="[[item]]"
             on-action-requested="_processItem"
             noink="[[noink]]"
-            action-label="[[actionLabel]]"></exchange-search-list-item>
+            action-label="[[actionLabel]]"
+            default-icon="[[_defaultIcon]]"></exchange-search-list-item>
         </template>
       </template>
     </section>
@@ -515,7 +517,12 @@ class ExchangeSearchPanel extends PolymerElement {
         observer: '_columnsChanged'
       },
 
-      _isAttached: Boolean
+      _isAttached: Boolean,
+
+      _defaultIcon: {
+        type: String,
+        computed: '_computeDefaultIcon(type)'
+      }
     };
   }
 
@@ -727,9 +734,9 @@ class ExchangeSearchPanel extends PolymerElement {
     this.$.errorToast.opened = true;
   }
 
-  _computeQueryParams(type, limit, offset, query) {
+  _computeQueryParams(types, limit, offset, query) {
     const params = {
-      type: this._getTypes(type),
+      types: this._getTypes(types),
       limit: limit,
       offset: offset
     };
@@ -947,6 +954,14 @@ class ExchangeSearchPanel extends PolymerElement {
       case m450: return 2;
       default: return 1;
     }
+  }
+
+  _computeDefaultIcon(type) {
+    if (type === 'rest-api') {
+      return 'arc:raml-r';
+    }
+    // This is included by anypoint auth button.
+    return 'exchange:exchange';
   }
   /**
    * Fired when the user requested to process the item.

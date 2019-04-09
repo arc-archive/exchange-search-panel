@@ -42,7 +42,11 @@ export const ExchangeSearchItemMixin = dedupingMixin((base) => {
         actionLabel: {
           type: String,
           value: 'Download'
-        }
+        },
+        /**
+         * A default icon to render if the asset is missing an icon.
+         */
+        defaultIcon: String
       };
     }
     // Computes value for `iron-icon` src property from current item.
@@ -57,7 +61,7 @@ export const ExchangeSearchItemMixin = dedupingMixin((base) => {
       if (item && item.icon) {
         return;
       }
-      return 'arc:raml-r';
+      return this.defaultIcon; // 'arc:raml-r';
     }
     /**
      * Dispatches the `download` custom event to inform the panel
