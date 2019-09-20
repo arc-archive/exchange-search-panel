@@ -5,11 +5,10 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   exchange-icons.html
+ *   src/Styles.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-/// <reference path="../iron-iconset-svg/iron-iconset-svg.d.ts" />
-
+import {css} from 'lit-element';
