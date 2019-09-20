@@ -5,10 +5,10 @@
  *   https://github.com/Polymer/tools/tree/master/packages/gen-typescript-declarations
  *
  * To modify these typings, edit the source file(s):
- *   exchange-search-grid-item.js
+ *   src/icons.js
  */
 
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-import {ExchangeSearchGridItem} from './src/ExchangeSearchGridItem.js';
+import {svg} from 'lit-element';

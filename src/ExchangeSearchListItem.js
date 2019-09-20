@@ -70,6 +70,20 @@ export class ExchangeSearchListItem extends ExchangeListItemBase {
 
     star-rating {
       display: inline-block;
+    }
+
+    .thumb {
+      display: block;
+      width: 36px;
+      height: 36px;
+      background-size: cover;
+    }
+
+    .default-icon {
+      display: block;
+      width: 36px;
+      height: 36px;
+      fill: currentColor;
     }`;
   }
 

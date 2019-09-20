@@ -29,7 +29,6 @@ export class ExchangeSearchGridItem extends ExchangeListItemBase {
       line-height: var(--arc-font-subhead-line-height);
       padding: 0;
       margin: 0;
-      margin-left: 8px;
     }
 
     .title {
@@ -44,7 +43,9 @@ export class ExchangeSearchGridItem extends ExchangeListItemBase {
       height: 100%;
       box-sizing: border-box;
       display: flex;
-      flex-direction: colum;
+      flex-direction: column;
+      border: 1px #e5e5e5 solid;
+      border-radius: 3px;
     }
 
     .content {
@@ -64,6 +65,16 @@ export class ExchangeSearchGridItem extends ExchangeListItemBase {
       min-width: 40px;
       width: 40px;
       height: 40px;
+      margin-right: 8px;
+      background-size: cover;
+    }
+
+    .default-icon {
+      display: block;
+      min-width: 40px;
+      width: 40px;
+      height: 40px;
+      fill: currentColor;
     }
     `;
   }

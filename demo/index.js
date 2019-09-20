@@ -1,6 +1,8 @@
 import { html } from 'lit-html';
 import { ArcDemoPage } from '@advanced-rest-client/arc-demo-helper/ArcDemoPage.js';
 import '@anypoint-web-components/anypoint-checkbox/anypoint-checkbox.js';
+import '@anypoint-web-components/anypoint-radio-button/anypoint-radio-button.js';
+import '@anypoint-web-components/anypoint-radio-button/anypoint-radio-group.js';
 import '@advanced-rest-client/arc-demo-helper/arc-interactive-demo.js';
 import '@advanced-rest-client/oauth-authorization/oauth2-authorization.js';
 import '@polymer/iron-media-query/iron-media-query.js';
@@ -11,16 +13,23 @@ class DemoPage extends ArcDemoPage {
     super();
     this.initObservableProperties([
       'compatibility',
-      'outlined'
+      'outlined',
+      'columns',
+      'type'
     ]);
     this._componentName = 'exchange-search-panel';
     this.demoStates = ['Filled', 'Outlined', 'Anypoint'];
 
     this.redirectUrl = 'https://auth.advancedrestclient.com/oauth-popup.html';
-    this.clientId = '59KaqF90hLgZMJec';
+    this.clientId = '2e38d46b60c5476584cdecba8b516711';
+    this.columns = 'auto';
+    this.type = 'rest-api'
 
     this._demoStateHandler = this._demoStateHandler.bind(this);
     this._toggleMainOption = this._toggleMainOption.bind(this);
+    this._columnsHandler = this._columnsHandler.bind(this);
+    window.addEventListener('anypoint-signin-aware-error', this._signInError.bind(this));
+    window.addEventListener('oauth2-code-response', this._signInCode.bind(this));
   }
 
   _toggleMainOption(e) {
@@ -34,6 +43,22 @@ class DemoPage extends ArcDemoPage {
     this.compatibility = state === 2;
   }
 
+  _columnsHandler(e) {
+    const { name, checked, value } = e.target;
+    if (!checked) {
+      return;
+    }
+    this[name] = value;
+  }
+
+  _signInError(e) {
+    console.log('Log in error', e.detail);
+  }
+
+  _signInCode(e) {
+    console.log('Access token code request', e.detail);
+  }
+
   _demoTemplate() {
     const {
       demoStates,
@@ -45,7 +70,9 @@ class DemoPage extends ArcDemoPage {
       oauth2RedirectUri,
       request,
       redirectUrl,
-      clientId
+      clientId,
+      columns,
+      type
     } = this;
     return html`
       <section class="documentation-section">
@@ -67,6 +94,8 @@ class DemoPage extends ArcDemoPage {
             ?narrow="${narrow}"
             .oauth2RedirectUri="${oauth2RedirectUri}"
             .editorRequest="${request}"
+            .columns="${columns}"
+            .type="${type}"
             anypointauth
             exchangeredirecturi="${redirectUrl}"
             exchangeclientid="${clientId}"
@@ -90,6 +119,100 @@ class DemoPage extends ArcDemoPage {
           >
             Ignore content-* headers on GET
           </anypoint-checkbox>
+
+          <label slot="options" id="columnsLabel">Columns</label>
+          <anypoint-radio-group
+            slot="options"
+            selectable="anypoint-radio-button"
+            aria-labelledby="columnsLabel"
+          >
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              value="1"
+            >1</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              value="2"
+            >2</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              value="3"
+            >3</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              value="4"
+            >4</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              value="5"
+            >5</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              value="6"
+            >6</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="columns"
+              checked
+              value="auto"
+            >Auto</anypoint-radio-button>
+          </anypoint-radio-group>
+
+
+          <label slot="options" id="typeLabel">Asset type</label>
+          <anypoint-radio-group
+            slot="options"
+            selectable="anypoint-radio-button"
+            aria-labelledby="typeLabel"
+          >
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="rest-api"
+              checked
+            >REST API</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="connector"
+            >Connector</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="template"
+            >Template</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="example"
+            >Example</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="soap-api"
+            >SOAP API</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="raml-fragment"
+            >API fragment</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value="custom"
+            >Custom asset</anypoint-radio-button>
+            <anypoint-radio-button
+              @change="${this._columnsHandler}"
+              name="type"
+              value=""
+            >Any asset</anypoint-radio-button>
+          </anypoint-radio-group>
         </arc-interactive-demo>
       </section>
     `;

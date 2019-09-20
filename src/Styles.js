@@ -59,19 +59,27 @@ anypoint-icon-button.toggle-view {
   flex: 1;
 }
 
+.list-wrapper {
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .list {
   color: inherit;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .list[data-list] {
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 exchange-search-grid-item {

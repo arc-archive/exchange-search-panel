@@ -42,6 +42,7 @@
     "@advanced-rest-client/prettier-config": "^0.1.0",
     "@advanced-rest-client/testing-karma-sl": "^1.0.4",
     "@anypoint-web-components/anypoint-checkbox": "^1.0.1",
+    "@anypoint-web-components/anypoint-radio-button": "^0.1.2",
     "@commitlint/cli": "^8.1.0",
     "@commitlint/config-conventional": "^7.0.0",
     "@open-wc/testing": "^2.3.3",

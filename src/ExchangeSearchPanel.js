@@ -59,6 +59,24 @@ export class ExchangeSearchPanel extends LitElement {
   get querying() {
     return this._querying;
   }
+
+  get _querying() {
+    return this.__querying;
+  }
+
+  set _querying(value) {
+    const old = this.__querying;
+    /* istanbul ignore if */
+    if (old === value) {
+      return;
+    }
+    this.__querying = value;
+    this.dispatchEvent(new CustomEvent('querying-changed', {
+      detail: {
+        value
+      }
+    }));
+  }
   /**
    * @return {Boolean} `true` if the `items` property has values.
    */
@@ -123,7 +141,7 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   get type() {
-    return this._state;
+    return this._type;
   }
 
   set type(value) {
@@ -164,18 +182,18 @@ export class ExchangeSearchPanel extends LitElement {
     this._accessTokenChenged(value, old);
   }
 
-  get scrollTarget() {
-    return this._scrollTarget;
+  get columns() {
+    return this._columns;
   }
 
-  set scrollTarget(value) {
-    const old = this._scrollTarget;
+  set columns(value) {
+    const old = this._columns;
     /* istanbul ignore if */
     if (old === value) {
       return;
     }
-    this._scrollTarget = value;
-    this._scrollTargetChanged();
+    this._columns = value;
+    this._computeColumns();
   }
 
   get _query() {
@@ -218,7 +236,7 @@ export class ExchangeSearchPanel extends LitElement {
        * @type {String|Array<String>} Single string type, coma separates types or
        * array of types.
        */
-      type: { },
+      type: { type: String },
       /**
        * Use this to set panel title value. By default is uses `type`
        * property to determine the title. When this property is set the title
@@ -226,13 +244,6 @@ export class ExchangeSearchPanel extends LitElement {
        * of `type`.
        */
       panelTitle: { type: String },
-      /**
-       * Scrolling target used to determine when authomatically download
-       * next results.
-       *
-       * By default it is `document.documentElement`
-       */
-      scrollTarget: { type: Object },
       /**
        * Padding in pixels that will trigget query to the Exchange server
        * when the user scrolls the list.
@@ -294,23 +305,7 @@ export class ExchangeSearchPanel extends LitElement {
        * do not use `auto` when embedding the element not as whole width
        * view.
        */
-      columns: { type: Number },
-
-      _mq2200: Boolean,
-      _mq1900: Boolean,
-      _mq2000: Boolean,
-      _mq1700: Boolean,
-      _mq1400: Boolean,
-      _mq756: Boolean,
-      _mq450: Boolean,
-
-      _effectiveColumns: {
-        type: Number,
-        computed: '_computeColumns(columns, _mq2200, _mq2000, _mq1900, _mq1700, _mq1400, _mq756, _mq450)',
-        observer: '_columnsChanged'
-      },
-
-      _isAttached: { type: Boolean }
+      columns: { type: Number }
     };
   }
 
@@ -322,87 +317,22 @@ export class ExchangeSearchPanel extends LitElement {
     this.scrollTarget = this._doc;
     this.listOffsetTrigger = 120;
     this.columns = 4;
+    this.actionLabel = 'Download';
 
     this._oauth2ErrorHandler = this._oauth2ErrorHandler.bind(this);
     this._oauth2SignedOut = this._oauth2SignedOut.bind(this);
     this._oauth2SignedIn = this._oauth2SignedIn.bind(this);
-    this._onScroll = this._onScroll.bind(this);
-  }
-
-  connectedCallback() {
-    if (super.connectedCallback) {
-      super.connectedCallback();
-    }
-    this._isAttached = true;
-    this._scrollTargetChanged();
-  }
-
-  disconnectedCallback() {
-    if (super.disconnectedCallback) {
-      super.disconnectedCallback();
-    }
-    this._isAttached = false;
-    this._scrollTargetChanged();
   }
 
   firstUpdated() {
+    const toggle = this.shadowRoot.querySelector('[data-action="grid-enable"]');
+    toggle.active = true;
+
     if (!this.anypointAuth) {
       this.authInitialized = true;
       if (!this.noAuto) {
         this.updateSearch();
       }
-    }
-  }
-
-  _scrollTargetChanged() {
-    const { scrollTarget, isAttached } = this;
-    if (this._oldScrollTarget) {
-      const eventTarget = scrollTarget === this._doc ? window : scrollTarget;
-      if (eventTarget.removeEventListener) {
-        eventTarget.removeEventListener('scroll', this._onScroll);
-      }
-      this._oldScrollTarget = undefined;
-    }
-    if (!isAttached) {
-      return;
-    }
-    if (scrollTarget === 'document') {
-      this.scrollTarget = this._doc;
-    } else if (typeof scrollTarget === 'string') {
-      const rootNode = this._findRootTarget();
-      if (rootNode && rootNode.querySelector) {
-        this.scrollTarget = rootNode.querySelector('#' + scrollTarget);
-      } else {
-        this.scrollTarget = undefined;
-      }
-    } else {
-      this._oldScrollTarget = scrollTarget;
-      if (scrollTarget) {
-        const eventTarget = scrollTarget === this._doc ? window : scrollTarget;
-        eventTarget.addEventListener('scroll', this._onScroll);
-      }
-    }
-  }
-  /**
-   * @return {Element} First in path element that has shadow root or
-   * ownerDocument of this component.
-   */
-  _findRootTarget() {
-    let target = this.parentNode;
-    const doc = this.ownerDocument;
-    const cnd = true;
-    while (cnd) {
-      if (!target) {
-        return doc;
-      }
-      if (target && target.shadowRoot) {
-        return target;
-      } else if (target && target.host) {
-        return target.host.shadowRoot;
-      } else if (target === doc) {
-        return target;
-      }
-      target = target.parentNode;
     }
   }
   /**
@@ -447,28 +377,25 @@ export class ExchangeSearchPanel extends LitElement {
     if (this.listView) {
       this.listView = false;
     }
-    const toggle = this.shadowRoot.querySelector('[data-action="grid-enable"]');
-    if (!toggle.active) {
-      toggle.active = true;
-    }
+    const toggle = this.shadowRoot.querySelector('[data-action="list-enable"]');
+    toggle.active = false;
   }
   // Handler for list view button click
   _enableList() {
     if (!this.listView) {
       this.listView = true;
     }
-    const toggle = this.shadowRoot.querySelector('[data-action="list-enable"]');
-    if (!toggle.active) {
-      toggle.active = true;
-    }
+    const toggle = this.shadowRoot.querySelector('[data-action="grid-enable"]');
+    toggle.active = false;
   }
   /**
    * Resets current list of results and makes a query to the Exchange server.
    * It will use current value of search query (which might be empty) to
    * search for an asset.
    */
-  updateSearch() {
+  async updateSearch() {
     this.reset();
+    await this.updateComplete;
     this.queryCurrent();
   }
 
@@ -538,12 +465,14 @@ export class ExchangeSearchPanel extends LitElement {
    *
    * Note, if `noMoreResults` flag is set it will never query for more data.
    * You have to manually clear the property.
+   *
+   * @param {Event} e
    */
-  _onScroll() {
+  _onScroll(e) {
     if (this.querying || this.noMoreResults) {
       return;
     }
-    const st = this._oldScrollTarget;
+    const st = e.target;
     const padding = st.scrollHeight - (st.clientHeight + st.scrollTop);
     if (padding <= this.listOffsetTrigger) {
       this.queryCurrent();
@@ -674,27 +603,32 @@ export class ExchangeSearchPanel extends LitElement {
    * @param {Boolean} m1400
    * @param {Boolean} m756
    * @param {Boolean} m450
-   * @return {Number}
    */
-  _computeColumns(columns, m2200, m2000, m1900, m1700, m1400, m756, m450) {
+  _computeColumns() {
+    const { columns, _mq2200, _mq2000, _mq1900, _mq1700, _mq1400, _mq756, _mq450 } = this;
+    let result;
     if (!isNaN(columns)) {
-      return Number(columns);
+      result = Number(columns);
+    } else {
+      // console.log(_mq2200, _m2000, _m1900, _m1700, _m1400, _m756, _m450);
+      switch (true) {
+        case _mq2200: result = 8; break;
+        case _mq2000: result = 7; break;
+        case _mq1900: result = 6; break;
+        case _mq1700: result = 5; break;
+        case _mq1400: result = 4; break;
+        case _mq756: result = 3; break;
+        case _mq450: result = 2; break;
+        default: result = 1; break;
+      }
     }
-    switch (true) {
-      case m2200: return 8;
-      case m2000: return 7;
-      case m1900: return 6;
-      case m1700: return 5;
-      case m1400: return 4;
-      case m756: return 3;
-      case m450: return 2;
-      default: return 1;
-    }
+    this._columnsChanged(result);
   }
 
   _mqHandler(e) {
     const prop = e.target.dataset.prop;
     this[prop] = e.detail.value;
+    this._computeColumns();
   }
 
   render() {
@@ -736,8 +670,7 @@ export class ExchangeSearchPanel extends LitElement {
   _headerTemplate() {
     const {
       _effectivePanelTitle,
-      anypointAuth,
-      listView
+      anypointAuth
     } = this;
     return html`<div class="header">
       <h2>${_effectivePanelTitle}</h2>
@@ -746,7 +679,6 @@ export class ExchangeSearchPanel extends LitElement {
         <anypoint-icon-button
           data-action="grid-enable"
           toggles
-          ?active="${!listView}"
           @click="${this._enableGrid}"
           class="toggle-view"
         >
@@ -755,7 +687,6 @@ export class ExchangeSearchPanel extends LitElement {
         <anypoint-icon-button
           data-action="list-enable"
           toggles
-          ?active="${listView}"
           @click="${this._enableList}"
           class="toggle-view"
         >
@@ -792,6 +723,7 @@ export class ExchangeSearchPanel extends LitElement {
       class="auth-button"
       .redirectUri="${exchangeRedirectUri}"
       .clientId="${exchangeClientId}"
+      scopes="read:exchange"
       @signedin-changed="${this._signedInHandler}"
       @accesstoken-changed="${this._atHandler}"
       ?forceOauthEvents="${forceOauthEvents}"
@@ -849,12 +781,22 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   _listTemplate() {
-    const { listView, compatibility } = this;
+    const { listView, compatibility, renderLoadMore } = this;
     const items = this.items || [];
     return html`
+    <div class="list-wrapper" @scroll="${this._onScroll}">
     <section class="list" ?data-list="${listView}">
     ${items.map((item, index) => this._renderItem(listView, item, index, compatibility))}
-    </section>`;
+    </section>
+    ${renderLoadMore ? html`<div class="load-more">
+        <anypoint-button
+          emphasis="medium"
+          class="action-button"
+          @click="${this.queryCurrent}"
+        >Load more</anypoint-button>
+      </div>` : ''}
+    </div>
+    `;
   }
 
   _renderItem(listView, item, index, compatibility) {
@@ -865,20 +807,26 @@ export class ExchangeSearchPanel extends LitElement {
 
   _renderListItem(item, index, compatibility) {
     const { actionLabel } = this;
-    return html`<exchange-search-list-item
+    return html`
+    <exchange-search-list-item
+      data-index="${index}"
       .item="${item}"
       ?compatibility="${compatibility}"
       @action-requested="${this._processItem}"
-      .actionLabel="${actionLabel}"></exchange-search-list-item>`;
+      .actionLabel="${actionLabel}"
+    ></exchange-search-list-item>`;
   }
 
   _renderGridItem(item, index, compatibility) {
     const { actionLabel } = this;
-    return html`<exchange-search-grid-item
+    return html`
+    <exchange-search-grid-item
+      data-index="${index}"
       .item="${item}"
       ?compatibility="${compatibility}"
       @action-requested="${this._processItem}"
-      .actionLabel="${actionLabel}"></exchange-search-grid-item>`;
+      .actionLabel="${actionLabel}"
+    ></exchange-search-grid-item>`;
   }
   /**
    * Fired when the user requested to process the item.

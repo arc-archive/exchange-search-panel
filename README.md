@@ -6,15 +6,7 @@
 
 ## &lt;exchange-search-panel&gt;
 
-An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources
-
-```html
-<exchange-search-panel></exchange-search-panel>
-```
-
-### API components
-
-This components is a part of [API components ecosystem](https://elements.advancedrestclient.com/)
+An element that renders an UI to search Anypoint Exchange for available assets.
 
 ## Usage
 
@@ -38,39 +30,85 @@ npm install --save @advanced-rest-client/exchange-search-panel
 </html>
 ```
 
-### In a Polymer 3 element
+### In a LitElement template
 
 ```js
-import {PolymerElement, html} from '@polymer/polymer';
+import { LitElement, html } from 'lit-element';
 import '@advanced-rest-client/exchange-search-panel/exchange-search-panel.js';
 
-class SampleElement extends PolymerElement {
-  static get template() {
+class SampleElement extends LitElement {
+
+  render() {
     return html`
-    <exchange-search-panel></exchange-search-panel>
+    <exchange-search-panel
+      ?compatibility="${compatibility}"
+      ?outlined="${outlined}"
+      .oauth2RedirectUri="${oauth2RedirectUri}"
+      .editorRequest="${request}"
+      .columns="${columns}"
+      .type="${type}"
+      @process-exchange-asset-data="${this._assetHandler}"
+    ></exchange-search-panel>
     `;
+  }
+
+  _assetHandler(e) {
+    console.log(e.detail);
   }
 }
 customElements.define('sample-element', SampleElement);
 ```
 
-### Installation
+### Authorization
+
+The element uses `@anypoint-web-components/anypoint-signin` to sing a user in.
+Set `anypointauth`, `exchangeredirecturi`, and `exchangeclientid` attributes to enable authorization button.
+
+```html
+<exchange-search-panel
+  anypointauth
+  exchangeredirecturi="${redirectUrl}"
+  exchangeclientid="${clientId}"
+  @oauth2-code-response="${this._processCodeExchange}"
+></exchange-search-panel>
+```
+
+Note, that currently the Anypoint authorization server only support "code" oauth flow. This means you have to handle code response and
+exchange the code for access token. When token data is ready dispatch `oauth2-token-response` on the `window` object.
+The event's detail property should contain `accessToken` and `sate` property.
+
+```javascript
+async _processCodeExchange(e) {
+  const { code, state } = e.detail;
+  const at = await exchangeTokens(code, state);
+  window.dispatchEvent(new CustomEvent('oauth2-token-response', {
+    detail: {
+      accessToken: at,
+      state
+    }
+  }));
+}
+```
+
+## Development
 
 ```sh
 git clone https://github.com/advanced-rest-client/exchange-search-panel
-cd api-url-editor
+cd exchange-search-panel
 npm install
-npm install -g polymer-cli
 ```
 
 ### Running the demo locally
 
 ```sh
-polymer serve --npm
-open http://127.0.0.1:<port>/demo/
+npm start
 ```
 
 ### Running the tests
 ```sh
-polymer test --npm
+npm test
 ```
+
+## API components
+
+This components is a part of [API components ecosystem](https://elements.advancedrestclient.com/)

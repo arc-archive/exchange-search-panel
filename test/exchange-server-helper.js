@@ -1,5 +1,5 @@
-import sinon from '../../../sinon/pkg/sinon-esm.js';
-import '../../../chance/dist/chance.min.js';
+import * as sinon from 'sinon/pkg/sinon-esm.js';
+import 'chance/dist/chance.min.js';
 /* global chance */
 export const ExchangeServer = {
   createServer: function() {
@@ -15,9 +15,9 @@ export const ExchangeServer = {
   },
 
   mockList: function() {
-    let url = /^https:\/\/anypoint\.mulesoft\.com\/exchange\/api\/v2\/assets\?*/;
+    const url = /^https:\/\/anypoint\.mulesoft\.com\/exchange\/api\/v2\/assets\?*/;
     this.srv.respondWith('GET', url, function(request) {
-      let result = [];
+      const result = [];
       for (let i = 0; i < 5; i++) {
         result.push(ExchangeServer.createListObject());
       }
@@ -26,7 +26,7 @@ export const ExchangeServer = {
   },
 
   mockAssetDownload: function() {
-    let url = 'http://fake-download-asset.com';
+    const url = 'http://fake-download-asset.com';
     this.srv.respondWith('GET', url, function(xhr) {
       xhr.respond(200, {
         'Content-Type': 'application/zip'
@@ -38,7 +38,7 @@ export const ExchangeServer = {
     const obj = {
       name: chance.string(),
       tags: [],
-      rating: chance.integer({min: 0, max: 5}),
+      rating: chance.integer({ min: 0, max: 5 }),
       organization: {
         name: chance.string()
       },

@@ -11,41 +11,4 @@
 
 // tslint:disable:variable-name Describing an API that's defined elsewhere.
 
-import {ExchangeSearchItemMixin} from './exchange-search-item-mixin.js';
-
-declare namespace UiElements {
-
-  /**
-   * `<exchange-search-list-item>` Displays a single list item for Exchange
-   * search rersults panel.
-   *
-   * ### Example
-   *
-   * ```html
-   * <exchange-search-list-item item="{...}" on-download="..."></exchange-search-list-item>
-   * ```
-   *
-   * ### Styling
-   *
-   * `<exchange-search-list-item>` provides the following custom properties and mixins for styling:
-   *
-   * Custom property | Description | Default
-   * ----------------|-------------|----------
-   * `--exchange-search-list-item` | Mixin applied to the element | `{}`
-   * `--exchange-search-list-item-action-button` | Mixin applied to the visible accrion button | `{}`
-   * `--exchange-search-list-item-card-background-color` | Background color of the card item | `#fff`
-   * `--rating-icon-color` | Color of the rating icons when highlighted | `--primary-text-color`
-   * `--rating-unselected-opacity` | Color of the rating icons when not highlighted | `0.4`
-   */
-  class ExchangeSearchListItem extends
-    ExchangeSearchItemMixin(
-    Object) {
-  }
-}
-
-declare global {
-
-  interface HTMLElementTagNameMap {
-    "exchange-search-list-item": UiElements.ExchangeSearchListItem;
-  }
-}
+import {ExchangeSearchListItem} from './src/ExchangeSearchListItem.js';

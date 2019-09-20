@@ -14,7 +14,8 @@ the License.
 import { LitElement, html } from 'lit-element';
 import '@advanced-rest-client/star-rating/star-rating.js';
 import '@anypoint-web-components/anypoint-button/anypoint-button.js';
-// import { styleMap } from 'lit-html/directives/style-map.js';
+import { styleMap } from 'lit-html/directives/style-map.js';
+import { exchange } from './icons.js';
 
 export class ExchangeListItemBase extends LitElement {
   static get properties() {
@@ -64,16 +65,17 @@ export class ExchangeListItemBase extends LitElement {
   }
 
   _itemIconTemplate() {
-    // const map = {};
-    // const item = this.item || {};
-    // if (item.icon) {
-    //   map.backgroundImage = './aaaa';
-    // }
-    // style="${styleMap(map)}
+    const map = {};
+    const item = this.item || {};
+    if (item.icon) {
+      map.backgroundImage = `url('${item.icon}')`;
+    } else {
+      return html`<span class="default-icon thumb" slot="item-icon">${exchange}</span>`;
+    }
     return html`<span
       class="thumb"
       slot="item-icon"
-
+      style="${styleMap(map)}"
     ></span>`;
   }
 
