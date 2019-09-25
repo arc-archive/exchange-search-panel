@@ -420,7 +420,7 @@ describe('<exchange-search-panel>', () => {
       });
 
       it('accessToken is not set', function() {
-        assert.isUndefined(element.accessToken);
+        assert.notOk(element.accessToken);
       });
 
       it('Renders authorization button', function() {

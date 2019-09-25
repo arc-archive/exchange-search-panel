@@ -557,6 +557,9 @@ export class ExchangeSearchPanel extends LitElement {
    * @param {String|undefined} old
    */
   _accessTokenChenged(token, old) {
+    if (token && !this.authInitialized) {
+      this.authInitialized = true;
+    }
     if (!old && !token) {
       return;
     }
@@ -701,7 +704,7 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   _atHandler(e) {
-    this.signedIn = e.detail.value;
+    this.accessToken = e.detail.value;
   }
 
   _queryHandler(e) {
