@@ -134,3 +134,12 @@
 
 
 
+## [3.0.2](https://github.com/advanced-rest-client/exchange-search-panel/compare/0.2.3...3.0.2) (2019-09-25)
+
+
+### Bug Fixes
+
+* fixing authorization initalization ([1fda059](https://github.com/advanced-rest-client/exchange-search-panel/commit/1fda059))
+
+
+
