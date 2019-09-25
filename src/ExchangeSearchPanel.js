@@ -559,6 +559,7 @@ export class ExchangeSearchPanel extends LitElement {
   _accessTokenChenged(token, old) {
     if (token && !this.authInitialized) {
       this.authInitialized = true;
+      this.queryCurrent();
     }
     if (!old && !token) {
       return;
