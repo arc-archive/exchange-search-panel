@@ -702,6 +702,10 @@ export class ExchangeSearchPanel extends LitElement {
 
   _signedInHandler(e) {
     this.signedIn = e.detail.value;
+    if (!e.detail.value && !this.authInitialized) {
+      this.authInitialized = true;
+      this.queryCurrent();
+    }
   }
 
   _atHandler(e) {

@@ -21,13 +21,13 @@ describe('<exchange-search-panel>', () => {
       noauto></exchange-search-panel>`);
   }
 
-  async function noAutoAuthFixture() {
-    return await fixture(html`<exchange-search-panel
-      noauto
-      anypointauth
-      exchangeredirecturi="https://domain.com"
-      exchangeclientid="test1234"></exchange-search-panel>`);
-  }
+  // async function noAutoAuthFixture() {
+  //   return await fixture(html`<exchange-search-panel
+  //     noauto
+  //     anypointauth
+  //     exchangeredirecturi="https://domain.com"
+  //     exchangeclientid="test1234"></exchange-search-panel>`);
+  // }
 
   async function untilLoaded(element) {
     return new Promise((resolve) => {
@@ -531,12 +531,6 @@ describe('<exchange-search-panel>', () => {
 
       it('Won\'t request for data when authorization is not set', async () => {
         await noAutoFixture();
-        assert.lengthOf(ExchangeServer.srv.requests, 0);
-      });
-
-      it('Won\'t request for data when authorization is set', async () => {
-        const element = await noAutoAuthFixture();
-        element.authInitialized = true;
         assert.lengthOf(ExchangeServer.srv.requests, 0);
       });
     });
