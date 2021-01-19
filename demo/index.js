@@ -1,5 +1,5 @@
 import { html } from 'lit-html';
-import { ArcDemoPage } from '@advanced-rest-client/arc-demo-helper/ArcDemoPage.js';
+import { DemoPage } from '@advanced-rest-client/arc-demo-helper';
 import '@anypoint-web-components/anypoint-checkbox/anypoint-checkbox.js';
 import '@anypoint-web-components/anypoint-radio-button/anypoint-radio-button.js';
 import '@anypoint-web-components/anypoint-radio-button/anypoint-radio-group.js';
@@ -8,7 +8,7 @@ import '@advanced-rest-client/oauth-authorization/oauth2-authorization.js';
 import '@polymer/iron-media-query/iron-media-query.js';
 import '../exchange-search-panel.js';
 
-class DemoPage extends ArcDemoPage {
+class ComponentDemoPage extends DemoPage {
   constructor() {
     super();
     this.initObservableProperties([
@@ -220,12 +220,11 @@ class DemoPage extends ArcDemoPage {
 
   contentTemplate() {
     return html`
-      <h2>Exchange seatch panel</h2>
+      <h2>Exchange search panel</h2>
       ${this._demoTemplate()}
     `;
   }
 }
 
-const instance = new DemoPage();
+const instance = new ComponentDemoPage();
 instance.render();
-window._demo = instance;

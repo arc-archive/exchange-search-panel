@@ -12,9 +12,9 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { LitElement, html } from 'lit-element';
+import { styleMap } from 'lit-html/directives/style-map.js';
 import '@advanced-rest-client/star-rating/star-rating.js';
 import '@anypoint-web-components/anypoint-button/anypoint-button.js';
-import { styleMap } from 'lit-html/directives/style-map.js';
 import { exchange } from './icons.js';
 
 export class ExchangeListItemBase extends LitElement {
@@ -24,11 +24,6 @@ export class ExchangeListItemBase extends LitElement {
        * REST API index datastore object
        */
       item: { type: Object },
-      /**
-       * If true, the element will not produce a ripple effect when interacted
-       * with via the pointer.
-       */
-      noink: { type: Boolean },
       /**
        * Main action button of an item.
        */
@@ -43,6 +38,8 @@ export class ExchangeListItemBase extends LitElement {
   constructor() {
     super();
     this.actionLabel = 'Download';
+    this.compatibility = false;
+    this.item = undefined;
   }
 
   /**
@@ -50,7 +47,7 @@ export class ExchangeListItemBase extends LitElement {
    * about user action.
    */
   requestAction() {
-    this.dispatchEvent(new CustomEvent('action-requested'));
+    this.dispatchEvent(new CustomEvent('action'));
   }
 
   _ratingTemplate() {
@@ -59,19 +56,19 @@ export class ExchangeListItemBase extends LitElement {
     return html`<star-rating
       .rating="${item.rating}"
       readonly
-      title="Api raiting: ${value}/5"
+      title="Api rating: ${value}/5"
       tabindex="-1"
     ></star-rating>`;
   }
 
   _itemIconTemplate() {
-    const map = {};
-    const item = this.item || {};
-    if (item.icon) {
-      map.backgroundImage = `url('${item.icon}')`;
-    } else {
-      return html`<span class="default-icon thumb" slot="item-icon">${exchange}</span>`;
+    const { item = {} } = this;
+    if (!item.icon) {
+      return html`<span class="default-icon thumb" slot="item-icon">${exchange}</span>`; 
     }
+    const map = {
+      backgroundImage: `url('${item.icon}')`,
+    };
     return html`<span
       class="thumb"
       slot="item-icon"
@@ -91,11 +88,4 @@ export class ExchangeListItemBase extends LitElement {
       class="open-button"
     >${actionLabel}</anypoint-button>`;
   }
-  /**
-   * Dispatched when the user requested to download the API.
-   *
-   * The event does not bubble.
-   *
-   * @event action-requested
-   */
 }

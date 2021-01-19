@@ -16,18 +16,13 @@ import '@anypoint-web-components/anypoint-item/anypoint-icon-item.js';
 import '@anypoint-web-components/anypoint-item/anypoint-item-body.js';
 import { ExchangeListItemBase } from './ExchangeListItemBase.js';
 /**
- * `<exchange-search-list-item>` Displays a single list item for Exchange
- * search rersults panel.
+ * `<exchange-search-list-item>` Displays a single list item for Exchange search results panel.
  *
  * ### Example
  *
  * ```html
  * <exchange-search-list-item item="{...}" @download="..."></exchange-search-list-item>
  * ```
- *
- * @customElement
- * @demo demo/index.html
- * @memberof UiElements
  */
 export class ExchangeSearchListItem extends ExchangeListItemBase {
   static get styles() {
