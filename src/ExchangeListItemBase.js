@@ -31,7 +31,7 @@ export class ExchangeListItemBase extends LitElement {
       /**
        * Enables compatibility with Anypoint platform
        */
-      compatibility: { type: Boolean }
+      compatibility: { type: Boolean },
     };
   }
 
@@ -54,7 +54,7 @@ export class ExchangeListItemBase extends LitElement {
     const item = this.item || {};
     const value = item.rating || 0;
     return html`<star-rating
-      .rating="${item.rating}"
+      .value="${item.rating}"
       readonly
       title="Api rating: ${value}/5"
       tabindex="-1"

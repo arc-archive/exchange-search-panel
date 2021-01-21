@@ -14,6 +14,7 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { LitElement, html } from 'lit-element';
+import { AnypointSignedInErrorType, AnypointSignedOutType, AnypointSignedInType } from '@anypoint-web-components/anypoint-signin';
 import '@anypoint-web-components/anypoint-button/anypoint-button.js';
 import '@anypoint-web-components/anypoint-button/anypoint-icon-button.js';
 import { viewColumn, viewList, search } from '@advanced-rest-client/arc-icons/ArcIcons.js';
@@ -553,15 +554,15 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   _listenOauth() {
-    this.addEventListener('anypoint-signin-aware-error', this._oauth2ErrorHandler);
-    this.addEventListener('anypoint-signin-aware-signed-out', this._oauth2SignedOut);
-    this.addEventListener('anypoint-signin-aware-success', this._oauth2SignedIn);
+    this.addEventListener(AnypointSignedInErrorType, this._oauth2ErrorHandler);
+    this.addEventListener(AnypointSignedOutType, this._oauth2SignedOut);
+    this.addEventListener(AnypointSignedInType, this._oauth2SignedIn);
   }
 
   _unlistenOauth() {
-    this.removeEventListener('anypoint-signin-aware-error', this._oauth2ErrorHandler);
-    this.removeEventListener('anypoint-signin-aware-signed-out', this._oauth2SignedOut);
-    this.removeEventListener('anypoint-signin-aware-success', this._oauth2SignedIn);
+    this.removeEventListener(AnypointSignedInErrorType, this._oauth2ErrorHandler);
+    this.removeEventListener(AnypointSignedOutType, this._oauth2SignedOut);
+    this.removeEventListener(AnypointSignedInType, this._oauth2SignedIn);
   }
 
   _oauth2ErrorHandler() {
@@ -752,15 +753,15 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   _signedInHandler(e) {
-    this.signedIn = e.detail.value;
-    if (!e.detail.value && !this.authInitialized) {
+    this.signedIn = e.target.signedIn;
+    if (!e.target.signedIn && !this.authInitialized) {
       this.authInitialized = true;
       this.queryCurrent();
     }
   }
 
   _atHandler(e) {
-    this.accessToken = e.detail.value;
+    this.accessToken = e.target.accessToken;
   }
 
   _queryHandler(e) {
@@ -783,8 +784,8 @@ export class ExchangeSearchPanel extends LitElement {
       .redirectUri="${exchangeRedirectUri}"
       .clientId="${exchangeClientId}"
       scopes="read:exchange"
-      @signedin-changed="${this._signedInHandler}"
-      @accesstoken-changed="${this._atHandler}"
+      @signedinchange="${this._signedInHandler}"
+      @accesstokenchange="${this._atHandler}"
       ?forceOauthEvents="${forceOauthEvents}"
       width="wide"
     ></anypoint-signin>`;
