@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/exchange-search-panel",
   "description": "An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources",
-  "version": "3.0.3",
+  "version": "4.0.0",
   "license": "Apache-2.0",
   "main": "index.js",
   "module": "index.js",
@@ -31,8 +31,6 @@
     "@anypoint-web-components/anypoint-item": "^1.0.8",
     "@anypoint-web-components/anypoint-signin": "^5.0.0",
     "@polymer/iron-ajax": "^3.0.0",
-    "@polymer/iron-media-query": "^3.0.1",
-    "@polymer/paper-toast": "^3.0.0",
     "lit-element": "^2.4.0",
     "lit-html": "^1.3.0"
   },

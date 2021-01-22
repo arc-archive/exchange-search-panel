@@ -1,22 +1,23 @@
-import * as sinon from 'sinon/pkg/sinon-esm.js';
+import sinon from 'sinon';
 import 'chance/dist/chance.min.js';
+
 /* global chance */
 export const ExchangeServer = {
-  createServer: function() {
-    this.srv = sinon.fakeServer.create({
+  createServer: () => {
+    ExchangeServer.srv = sinon.fakeServer.create({
       autoRespond: true
     });
-    this.mock();
+    ExchangeServer.mock();
   },
 
-  mock: function() {
-    this.mockList();
-    this.mockAssetDownload();
+  mock: () => {
+    ExchangeServer.mockList();
+    ExchangeServer.mockAssetDownload();
   },
 
-  mockList: function() {
+  mockList: () => {
     const url = /^https:\/\/anypoint\.mulesoft\.com\/exchange\/api\/v2\/assets\?*/;
-    this.srv.respondWith('GET', url, function(request) {
+    ExchangeServer.srv.respondWith('GET', url, (request) => {
       const result = [];
       for (let i = 0; i < 5; i++) {
         result.push(ExchangeServer.createListObject());
@@ -25,21 +26,24 @@ export const ExchangeServer = {
     });
   },
 
-  mockAssetDownload: function() {
+  mockAssetDownload: () => {
     const url = 'http://fake-download-asset.com';
-    this.srv.respondWith('GET', url, function(xhr) {
+    ExchangeServer.srv.respondWith('GET', url, (xhr) => {
       xhr.respond(200, {
         'Content-Type': 'application/zip'
       }, 'test');
     });
   },
 
-  createListObject: function() {
+  createListObject: () => {
     const obj = {
+      // @ts-ignore
       name: chance.string(),
       tags: [],
+      // @ts-ignore
       rating: chance.integer({ min: 0, max: 5 }),
       organization: {
+        // @ts-ignore
         name: chance.string()
       },
       files: [{
@@ -50,7 +54,7 @@ export const ExchangeServer = {
     return obj;
   },
 
-  restore: function() {
-    this.srv.restore();
+  restore: () => {
+    ExchangeServer.srv.restore();
   }
 };

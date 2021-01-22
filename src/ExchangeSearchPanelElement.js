@@ -14,23 +14,76 @@ License for the specific language governing permissions and limitations under
 the License.
 */
 import { LitElement, html } from 'lit-element';
+import { styleMap } from 'lit-html/directives/style-map.js';
+import { classMap } from 'lit-html/directives/class-map.js';
 import { AnypointSignedInErrorType, AnypointSignedOutType, AnypointSignedInType } from '@anypoint-web-components/anypoint-signin';
+import { viewColumn, viewList, search } from '@advanced-rest-client/arc-icons/ArcIcons.js';
 import '@anypoint-web-components/anypoint-button/anypoint-button.js';
 import '@anypoint-web-components/anypoint-button/anypoint-icon-button.js';
-import { viewColumn, viewList, search } from '@advanced-rest-client/arc-icons/ArcIcons.js';
 import '@anypoint-web-components/anypoint-input/anypoint-input.js';
+import '@anypoint-web-components/anypoint-item/anypoint-icon-item.js';
+import '@anypoint-web-components/anypoint-item/anypoint-item-body.js';
 import '@polymer/iron-ajax/iron-ajax.js';
 import '@anypoint-web-components/anypoint-signin/anypoint-signin.js';
-import '@polymer/iron-media-query/iron-media-query.js';
-import '../exchange-search-grid-item.js';
-import '../exchange-search-list-item.js';
-import styles from './Styles.js';
+import '@advanced-rest-client/star-rating/star-rating.js';
+import { exchange } from './icons.js';
+import elementStyles from './Styles.js';
+import { register, unregister, mediaResult } from './MediaQueryMatcher.js';
 
 /** @typedef {import('@polymer/iron-ajax').IronAjaxElement} IronAjaxElement */
 /** @typedef {import('lit-element').TemplateResult} TemplateResult */
+/** @typedef {import('lit-html/directives/style-map').StyleInfo} StyleInfo */
+/** @typedef {import('@anypoint-web-components/anypoint-signin').AnypointSigninElement} AnypointSigninElement */
 /** @typedef {import('./types').ExchangeAsset} ExchangeAsset */
+/** @typedef {import('./types').MediaQueryResult} MediaQueryResult */
 
 export const assetsUri = 'https://anypoint.mulesoft.com/exchange/api/v2/assets';
+
+export const columnsValue = Symbol('columnsValue');
+export const attachMediaQueries = Symbol('attachMediaQueries');
+export const detachMediaQueries = Symbol('detachMediaQueries');
+export const mediaQueryHandler = Symbol('mediaQueryHandler');
+export const processMediaResult = Symbol('processMediaResult');
+export const oauthCallback = Symbol('oauthCallback');
+export const queryingValue = Symbol('queryingValue');
+export const notifyQuerying = Symbol('notifyQuerying');
+export const documentValue = Symbol('documentValue');
+export const ajaxValue = Symbol('ajaxValue');
+export const scrollHandler = Symbol('scrollHandler');
+export const queryInputHandler = Symbol('queryInputHandler');
+export const queryKeydownHandler = Symbol('queryKeydownHandler');
+export const querySearchHandler = Symbol('querySearchHandler');
+export const computeColumns = Symbol('computeColumns');
+export const columnsValueLocal = Symbol('columnsValueLocal');
+export const accessTokenValue = Symbol('accessTokenValue');
+export const typeValue = Symbol('typeValue');
+export const typeChanged = Symbol('typeChanged');
+export const anypointAuthValue = Symbol('anypointAuthValue');
+export const anypointAuthChanged = Symbol('anypointAuthChanged');
+export const listenOauth = Symbol('listenOauth');
+export const unlistenOauth = Symbol('unlistenOauth');
+export const itemActionHandler = Symbol('itemActionHandler');
+export const accessTokenChanged = Symbol('accessTokenChanged');
+export const setupAuthHeaders = Symbol('setupAuthHeaders');
+export const notifyTokenExpired = Symbol('notifyTokenExpired');
+export const exchangeResponseError = Symbol('exchangeResponseError');
+export const exchangeResponse = Symbol('exchangeResponse');
+export const enableGrid = Symbol('enableGrid');
+export const enableList = Symbol('enableList');
+export const signedInHandler = Symbol('signedInHandler');
+export const accessTokenHandler = Symbol('accessTokenHandler');
+export const authButtonTemplate = Symbol('authButtonTemplate');
+export const headerTemplate = Symbol('headerTemplate');
+export const searchTemplate = Symbol('searchTemplate');
+export const busyTemplate = Symbol('busyTemplate');
+export const listTemplate = Symbol('listTemplate');
+export const emptyTemplate = Symbol('emptyTemplate');
+export const renderItem = Symbol('renderItem');
+export const renderGridItem = Symbol('renderGridItem');
+export const renderListItem = Symbol('renderListItem');
+export const ratingTemplate = Symbol('ratingTemplate');
+export const itemIconTemplate = Symbol('itemIconTemplate');
+export const actionButtonTemplate = Symbol('actionButtonTemplate');
 
 /**
  * An element that displays an UI to search Anypoint Exchange for RAML (REST API) resources.
@@ -46,38 +99,20 @@ export const assetsUri = 'https://anypoint.mulesoft.com/exchange/api/v2/assets';
  *
  * ```html
  * <exchange-search-panel
- *  on-process-exchange-asset-data="_getAssetDetails"
- *  action-label="Details"></exchange-search-panel>
+ *  @selected="_getAssetDetails"
+ *  actionLabel="Details"></exchange-search-panel>
  * ```
  */
-export class ExchangeSearchPanel extends LitElement {
+export class ExchangeSearchPanelElement extends LitElement {
   static get styles() {
-    return styles;
+    return elementStyles;
   }
 
   /**
    * @return {boolean} `true` when the element is querying the API for the data.
    */
   get querying() {
-    return this._querying;
-  }
-
-  get _querying() {
-    return this.__querying;
-  }
-
-  set _querying(value) {
-    const old = this.__querying;
-    /* istanbul ignore if */
-    if (old === value) {
-      return;
-    }
-    this.__querying = value;
-    this.dispatchEvent(new CustomEvent('queryingchange', {
-      detail: {
-        value
-      }
-    }));
+    return this[queryingValue];
   }
 
   /**
@@ -97,9 +132,9 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   get queryParams() {
-    const { type, exchangeLimit, exchangeOffset, query } = this;
+    const { exchangeLimit, exchangeOffset, query } = this;
     const params = {
-      types: this._getTypes(type),
+      types: this.types,
       limit: exchangeLimit,
       offset: exchangeOffset
     };
@@ -109,7 +144,28 @@ export class ExchangeSearchPanel extends LitElement {
     return params;
   }
 
-  get _effectivePanelTitle() {
+  /**
+   * Parses list of types to an array of types.
+   * If the argument is array then it returns the same array.
+   *
+   * Note, this always returns array, even if the argument is empty.
+   * @returns {string[]} List of asset types.
+   */
+  get types() {
+    const { type } = this;
+    if (!type) {
+      return [];
+    }
+    if (Array.isArray(type)) {
+      return type;
+    }
+    if (type.indexOf(',') !== -1) {
+      return type.split(',').map((item) => item.trim());
+    }
+    return [type];
+  }
+
+  get effectivePanelTitle() {
     const { panelTitle, type } = this;
     if (panelTitle) {
       return panelTitle;
@@ -130,7 +186,7 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   /**
-   * @return {Boolean} if true then it renders "load more" button below the list
+   * @return {boolean} if true then it renders "load more" button below the list
    */
   get renderLoadMore() {
     const { querying, noMoreResults } = this;
@@ -140,72 +196,97 @@ export class ExchangeSearchPanel extends LitElement {
   /**
    * Shortcut for the document element
    *
-   * @type {Element}
+   * @type {HTMLElement}
    */
-  get _doc() {
+  get [documentValue]() {
     return this.ownerDocument.documentElement;
   }
 
+  /**
+   * @returns {string}
+   */
   get type() {
-    return this._type;
+    return this[typeValue];
   }
 
+  /**
+   * @param {string} value
+   */
   set type(value) {
-    const old = this._type;
+    const old = this[typeValue];
     /* istanbul ignore if */
     if (old === value) {
       return;
     }
-    this._type = value;
-    this._typeChanged(old);
+    this[typeValue] = value;
+    this[typeChanged](old);
   }
 
+  /**
+   * @returns {boolean}
+   */
   get anypointAuth() {
-    return this._anypointAuth;
+    return this[anypointAuthValue];
   }
 
+  /**
+   * @param {boolean} value
+   */
   set anypointAuth(value) {
-    const old = this._anypointAuth;
+    const old = this[anypointAuthValue];
     /* istanbul ignore if */
     if (old === value) {
       return;
     }
-    this._anypointAuth = value;
-    this._anypointAuthChanged(value);
+    this[anypointAuthValue] = value;
+    this[anypointAuthChanged](value);
   }
 
+  /**
+   * @returns {string}
+   */
   get accessToken() {
-    return this._accessToken;
+    return this[accessTokenValue];
   }
 
+  /**
+   * @param {string} value
+   */
   set accessToken(value) {
-    const old = this._accessToken;
+    const old = this[accessTokenValue];
     /* istanbul ignore if */
     if (old === value) {
       return;
     }
-    this._accessToken = value;
-    this._accessTokenChanged(value, old);
+    this[accessTokenValue] = value;
+    this[accessTokenChanged](value, old);
   }
 
+  /**
+   * @returns {number|string}
+   */
   get columns() {
-    return this._columns;
+    return this[columnsValueLocal];
   }
 
+  /**
+   * @param {number|string} value
+   */
   set columns(value) {
-    const old = this._columns;
+    const old = this[columnsValueLocal];
     /* istanbul ignore if */
     if (old === value) {
       return;
     }
-    this._columns = value;
-    this._computeColumns();
+    this[columnsValueLocal] = value;
+    this[computeColumns]();
+    this.requestUpdate('columns', old);
   }
 
   /**
    * @returns {IronAjaxElement}
    */
-  get _query() {
+  get [ajaxValue]() {
     return this.shadowRoot.querySelector('#query');
   }
 
@@ -215,10 +296,6 @@ export class ExchangeSearchPanel extends LitElement {
        * Saved items restored from the datastore.
        */
       items: { type: Array },
-      /**
-       * True when the element is querying the database for the data.
-       */
-      _querying: { type: Boolean },
       /**
        * Search query for the list.
        */
@@ -326,7 +403,7 @@ export class ExchangeSearchPanel extends LitElement {
     this.exchangeOffset = 0;
     this.exchangeLimit = 20;
     this.type = 'rest-api';
-    this.scrollTarget = this._doc;
+    this.scrollTarget = this[documentValue];
     this.listOffsetTrigger = 120;
     this.columns = 4;
     this.actionLabel = 'Download';
@@ -351,20 +428,15 @@ export class ExchangeSearchPanel extends LitElement {
      */
     this.items = undefined;
 
-    this._mq2200 = false;
-    this._mq2000 = false;
-    this._mq1900 = false;
-    this._mq1700 = false;
-    this._mq1400 = false;
-    this._mq756 = false;
-    this._mq450 = false;
-
-    this._oauth2ErrorHandler = this._oauth2ErrorHandler.bind(this);
-    this._oauth2SignedOut = this._oauth2SignedOut.bind(this);
-    this._oauth2SignedIn = this._oauth2SignedIn.bind(this);
+    this[oauthCallback] = this[oauthCallback].bind(this);
+    this[mediaQueryHandler] = this[mediaQueryHandler].bind(this);
   }
 
-  firstUpdated() {
+  /**
+   * @param {Map<string | number | symbol, unknown>} args
+   */
+  firstUpdated(args) {
+    super.firstUpdated(args);
     const toggle = this.shadowRoot.querySelector('[data-action="grid-enable"]');
     // @ts-ignore
     toggle.active = true;
@@ -377,28 +449,49 @@ export class ExchangeSearchPanel extends LitElement {
     }
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this[attachMediaQueries]();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this[detachMediaQueries]();
+  }
+
+  [attachMediaQueries]() {
+    register(this[mediaQueryHandler]);
+  }
+
+  [detachMediaQueries]() {
+    unregister();
+  }
+
   /**
-   * Parses list of types to an array of types.
-   * If the argument is array then it returns the same array.
-   *
-   * Note, this always returns array, even if the argument is empty.
-   *
-   * @param {string|string[]} type Coma separated list of asset types. Whitespace are trimmed.
-   * @return {Array<string>} List of asset types.
+   * @param {MediaQueryResult[]} result 
    */
-  _getTypes(type) {
-    if (!type) {
-      return [];
+  [mediaQueryHandler](result) {
+    const { columns } = this;
+    const typedColumns = Number(columns);
+    if (!Number.isNaN(typedColumns)) {
+      // does not set the media query value when columns value is set
+      return;
     }
-    if (Array.isArray(type)) {
-      return type;
-    }
-    if (type.indexOf(',') !== -1) {
-      type = type.split(',').map((item) => item.trim());
-    } else {
-      type = [type];
-    }
-    return type;
+    this[processMediaResult](result);
+  }
+
+  /**
+   * @param {MediaQueryResult[]} result 
+   */
+  [processMediaResult](result) {
+    const matched = result.find((item) => item.matches);
+    const value = matched ? matched.value : 1;
+    this[columnsValue] = value;
+    this.requestUpdate();
+  }
+
+  [notifyQuerying]() {
+    this.dispatchEvent(new CustomEvent('queryingchange'));
   }
 
   /**
@@ -408,11 +501,15 @@ export class ExchangeSearchPanel extends LitElement {
     this.items = /** @type ExchangeAsset[] */ ([]);
     this.exchangeOffset = 0;
     this.noMoreResults = false;
-    this._querying = false;
+    this[queryingValue] = false;
+    this[notifyQuerying]();
+    this.requestUpdate();
   }
 
-  // Handler for grid view button click
-  _enableGrid() {
+  /**
+   * Handler for grid view button click
+   */
+  [enableGrid]() {
     if (this.listView) {
       this.listView = false;
     }
@@ -421,8 +518,10 @@ export class ExchangeSearchPanel extends LitElement {
     toggle.active = false;
   }
 
-  // Handler for list view button click
-  _enableList() {
+  /**
+   * Handler for list view button click
+   */
+  [enableList]() {
     if (!this.listView) {
       this.listView = true;
     }
@@ -445,15 +544,19 @@ export class ExchangeSearchPanel extends LitElement {
   /**
    * @param {KeyboardEvent} e
    */
-  _searchKeydown(e) {
-    if (e.key === 'Enter' || e.which === 13 || e.keyCode === 13) {
+  [queryKeydownHandler](e) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       this.updateSearch();
     }
   }
 
-  _searchHandler(e) {
-    if (!e.target.value) {
+  /**
+   * @param {Event} e 
+   */
+  [querySearchHandler](e) {
+    const input = /** @type HTMLInputElement */ (e.target);
+    if (!input.value) {
       this.updateSearch();
     }
   }
@@ -466,15 +569,22 @@ export class ExchangeSearchPanel extends LitElement {
     if (this.querying) {
       return;
     }
-    this._querying = true;
-    this._query.generateRequest();
+    this[queryingValue] = true;
+    this[notifyQuerying]();
+    this.requestUpdate();
+    this[ajaxValue].generateRequest();
   }
 
-  _exchangeResponse(e) {
+  /**
+   * @param {CustomEvent} e
+   */
+  [exchangeResponse](e) {
     const data = /** @type ExchangeAsset[] */ (e.detail.response);
     if (!data || !data.length) {
       this.noMoreResults = true;
-      this._querying = false;
+      this[queryingValue] = false;
+      this[notifyQuerying]();
+      this.requestUpdate();
       return;
     }
     if (data.length < this.exchangeLimit) {
@@ -484,24 +594,34 @@ export class ExchangeSearchPanel extends LitElement {
     items = items.concat(data);
     this.exchangeOffset += data.length;
     this.items = items;
-    this._querying = false;
+    this[queryingValue] = false;
+    this[notifyQuerying]();
+    this.requestUpdate();
   }
 
-  _exchangeResponseError(e) {
-    this._querying = false;
+  /**
+   * @param {CustomEvent} e
+   */
+  [exchangeResponseError](e) {
+    this[queryingValue] = false;
+    this[notifyQuerying]();
     if (e.detail.request.status === 401 && this.signedIn) {
       // token expired
       this.accessToken = undefined;
       this.signedIn = false;
-      this._notifyTokenExpired();
+      this[notifyTokenExpired]();
     }
+    this.requestUpdate();
     // const toast = this.shadowRoot.querySelector('#errorToast');
     // toast.text = 'Unable to get data from Exchange.';
     // toast.opened = true;
   }
 
-  _notifyTokenExpired() {
-    this.dispatchEvent(new CustomEvent('tokenexpired'));
+  /**
+   * Dispatches the `tokenexpired` event
+   */
+  [notifyTokenExpired]() {
+    this.dispatchEvent(new Event('tokenexpired'));
   }
 
   /**
@@ -514,7 +634,7 @@ export class ExchangeSearchPanel extends LitElement {
    *
    * @param {Event} e
    */
-  _onScroll(e) {
+  [scrollHandler](e) {
     if (this.querying || this.noMoreResults) {
       return;
     }
@@ -526,18 +646,15 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   /**
-   * Dispatches `process-exchange-asset-data` when list item's
-   * `on-main-action-requested` custom event is handled.
+   * Dispatches non-bubbling `selected` event with the selected item on the detail.
    *
    * @param {CustomEvent} e
    */
-  _processItem(e) {
+  [itemActionHandler](e) {
     const node = /** @type HTMLElement */ (e.target);
     const index = Number(node.dataset.index);
     const item = this.items[index];
     this.dispatchEvent(new CustomEvent('selected', {
-      bubbles: true,
-      composed: true,
       detail: item
     }));
   }
@@ -545,44 +662,27 @@ export class ExchangeSearchPanel extends LitElement {
   /**
    * @param {boolean} state
    */
-  _anypointAuthChanged(state) {
+  [anypointAuthChanged](state) {
     if (state) {
-      this._listenOauth();
+      this[listenOauth]();
     } else {
-      this._unlistenOauth();
+      this[unlistenOauth]();
     }
   }
 
-  _listenOauth() {
-    this.addEventListener(AnypointSignedInErrorType, this._oauth2ErrorHandler);
-    this.addEventListener(AnypointSignedOutType, this._oauth2SignedOut);
-    this.addEventListener(AnypointSignedInType, this._oauth2SignedIn);
+  [listenOauth]() {
+    this.addEventListener(AnypointSignedInErrorType, this[oauthCallback]);
+    this.addEventListener(AnypointSignedOutType, this[oauthCallback]);
+    this.addEventListener(AnypointSignedInType, this[oauthCallback]);
   }
 
-  _unlistenOauth() {
-    this.removeEventListener(AnypointSignedInErrorType, this._oauth2ErrorHandler);
-    this.removeEventListener(AnypointSignedOutType, this._oauth2SignedOut);
-    this.removeEventListener(AnypointSignedInType, this._oauth2SignedIn);
+  [unlistenOauth]() {
+    this.removeEventListener(AnypointSignedInErrorType, this[oauthCallback]);
+    this.removeEventListener(AnypointSignedOutType, this[oauthCallback]);
+    this.removeEventListener(AnypointSignedInType, this[oauthCallback]);
   }
 
-  _oauth2ErrorHandler() {
-    // const {message} = e.detail;
-    // const toast = this.shadowRoot.querySelector('#errorToast');
-    // toast.text = message;
-    // toast.opened = true;
-    if (!this.authInitialized) {
-      this.authInitialized = true;
-      if (!this.noAuto) {
-        this.updateSearch();
-      }
-    }
-  }
-
-  /**
-   * Handles `anypoint-signin-aware-signed-out` custom event.
-   * Handled when the user is signed out.
-   */
-  _oauth2SignedOut() {
+  [oauthCallback]() {
     if (!this.authInitialized) {
       this.authInitialized = true;
     }
@@ -592,25 +692,12 @@ export class ExchangeSearchPanel extends LitElement {
   }
 
   /**
-   * Handles `anypoint-signin-aware-success` - the success - Anypoint
-   * sign in custom event. Updates search items for logged in user.
-   */
-  _oauth2SignedIn() {
-    if (!this.authInitialized) {
-      this.authInitialized = true;
-    }
-    if (!this.noAuto) {
-      this.updateSearch();
-    }
-  }
-
-  /**
-   * Calls `_setupAuthHeaders()` function when token value change.
+   * Calls `[setupAuthHeaders]()` function when token value change.
    *
    * @param {string=} token
    * @param {string=} old
    */
-  _accessTokenChanged(token, old) {
+  [accessTokenChanged](token, old) {
     if (token && !this.authInitialized) {
       this.authInitialized = true;
       this.queryCurrent();
@@ -618,7 +705,7 @@ export class ExchangeSearchPanel extends LitElement {
     if (!old && !token) {
       return;
     }
-    this._setupAuthHeaders(token);
+    this[setupAuthHeaders](token);
   }
 
   /**
@@ -627,27 +714,18 @@ export class ExchangeSearchPanel extends LitElement {
    *
    * @param {string=} token Oauth 2 token value for Anypoint.
    */
-  _setupAuthHeaders(token) {
+  [setupAuthHeaders](token) {
     const headers = {};
     if (token) {
       headers.authorization = `Bearer ${  token}`;
     }
-    this._query.headers = headers;
-  }
-
-  /**
-   * Updates width of the grid items when number of columns change
-   *
-   * @param {number} value Current value of `columns` property.
-   */
-  _columnsChanged(value) {
-    this.style.setProperty('--exchange-search-grid-item-computed-width', `${100/value  }%`);
+    this[ajaxValue].headers = headers;
   }
 
   /**
    * @param {string=} old 
    */
-  _typeChanged(old) {
+  [typeChanged](old) {
     if (old === undefined) {
       // Initialization.
       return;
@@ -660,42 +738,58 @@ export class ExchangeSearchPanel extends LitElement {
    * If first argument is a number this will be used as a number of columns.
    * Otherwise it uses media queries to determine the sate.
    */
-  _computeColumns() {
-    const { columns, _mq2200, _mq2000, _mq1900, _mq1700, _mq1400, _mq756, _mq450 } = this;
-    let result;
-    if (!Number.isNaN(columns)) {
-      result = Number(columns);
+  [computeColumns]() {
+    const { columns } = this;
+    const typedColumns = Number(columns);
+    if (!Number.isNaN(typedColumns)) {
+      this[columnsValue] = typedColumns;
+      this.requestUpdate();
     } else {
-      // console.log(_mq2200, _m2000, _m1900, _m1700, _m1400, _m756, _m450);
-      switch (true) {
-        case _mq2200: result = 8; break;
-        case _mq2000: result = 7; break;
-        case _mq1900: result = 6; break;
-        case _mq1700: result = 5; break;
-        case _mq1400: result = 4; break;
-        case _mq756: result = 3; break;
-        case _mq450: result = 2; break;
-        default: result = 1; break;
-      }
+      const result = mediaResult();
+      this[processMediaResult](result);
     }
-    this._columnsChanged(result);
   }
 
-  _mqHandler(e) {
-    const {prop} = e.target.dataset;
-    this[prop] = e.detail.value;
-    this._computeColumns();
+  /**
+   * @param {Event} e
+   */
+  [signedInHandler](e) {
+    const button = /** @type AnypointSigninElement */ (e.target);
+    this.signedIn = button.signedIn;
+    if (!button.signedIn && !this.authInitialized) {
+      this.authInitialized = true;
+      this.queryCurrent();
+    }
   }
 
+  /**
+   * @param {Event} e
+   */
+  [accessTokenHandler](e) {
+    const button = /** @type AnypointSigninElement */ (e.target);
+    this.accessToken = button.accessToken;
+  }
+
+  /**
+   * @param {Event} e
+   */
+  [queryInputHandler](e) {
+    const input = /** @type HTMLInputElement */ (e.target);
+    this.query = input.value;
+  }
+
+  /**
+   * @returns {TemplateResult} 
+   */
   render() {
     const { dataUnavailable, queryParams } = this;
     const handleAs = 'json';
     const debounce = 300;
     return html`
-    ${this._headerTemplate()}
-    ${this._searchTemplate()}
-    ${this._busyTemplate()}
-    ${dataUnavailable ? this._emptyTemplate() : this._listTemplate()}
+    ${this[headerTemplate]()}
+    ${this[searchTemplate]()}
+    ${this[busyTemplate]()}
+    ${dataUnavailable ? this[emptyTemplate]() : this[listTemplate]()}
 
     <iron-ajax
       id="query"
@@ -703,39 +797,27 @@ export class ExchangeSearchPanel extends LitElement {
       .handleAs="${handleAs}"
       .debounceDuration="${debounce}"
       .params="${queryParams}"
-      @response="${this._exchangeResponse}"
-      @error="${this._exchangeResponseError}"></iron-ajax>
-
-    <iron-media-query
-      query="(min-width: 2200px)" data-prop="_mq2200" @query-matches-changed="${this._mqHandler}"></iron-media-query>
-    <iron-media-query
-      query="(min-width: 2000px)" data-prop="_mq2000" @query-matches-changed="${this._mqHandler}"></iron-media-query>
-    <iron-media-query
-      query="(min-width: 1900px)" data-prop="_mq1900" @query-matches-changed="${this._mqHandler}"></iron-media-query>
-    <iron-media-query
-      query="(min-width: 1700px)" data-prop="_mq1700" @query-matches-changed="${this._mqHandler}"></iron-media-query>
-    <iron-media-query
-      query="(min-width: 1400px)" data-prop="_mq1400" @query-matches-changed="${this._mqHandler}"></iron-media-query>
-    <iron-media-query
-      query="(min-width: 756px)" data-prop="_mq756" @query-matches-changed="${this._mqHandler}"></iron-media-query>
-    <iron-media-query
-      query="(min-width: 450px)" data-prop="_mq450" @query-matches-changed="${this._mqHandler}"></iron-media-query>
+      @response="${this[exchangeResponse]}"
+      @error="${this[exchangeResponseError]}"></iron-ajax>
     `;
   }
 
-  _headerTemplate() {
+  /**
+   * @returns {TemplateResult} The template for the element's header 
+   */
+  [headerTemplate]() {
     const {
-      _effectivePanelTitle,
+      effectivePanelTitle,
       anypointAuth
     } = this;
     return html`<div class="header">
-      <h2>${_effectivePanelTitle}</h2>
+      <h2>${effectivePanelTitle}</h2>
       <div class="header-actions">
-        ${anypointAuth ? this._authButtonTemplate() : ''}
+        ${anypointAuth ? this[authButtonTemplate]() : ''}
         <anypoint-icon-button
           data-action="grid-enable"
           toggles
-          @click="${this._enableGrid}"
+          @click="${this[enableGrid]}"
           class="toggle-view"
         >
           <span class="icon">${viewColumn}</span>
@@ -743,7 +825,7 @@ export class ExchangeSearchPanel extends LitElement {
         <anypoint-icon-button
           data-action="list-enable"
           toggles
-          @click="${this._enableList}"
+          @click="${this[enableList]}"
           class="toggle-view"
         >
           <span class="icon">${viewList}</span>
@@ -752,23 +834,10 @@ export class ExchangeSearchPanel extends LitElement {
     </div>`;
   }
 
-  _signedInHandler(e) {
-    this.signedIn = e.target.signedIn;
-    if (!e.target.signedIn && !this.authInitialized) {
-      this.authInitialized = true;
-      this.queryCurrent();
-    }
-  }
-
-  _atHandler(e) {
-    this.accessToken = e.target.accessToken;
-  }
-
-  _queryHandler(e) {
-    this.query = e.detail.value;
-  }
-
-  _authButtonTemplate() {
+  /**
+   * @returns {TemplateResult} The template for authorization button
+   */
+  [authButtonTemplate]() {
     const {
       compatibility,
       authInitialized,
@@ -777,21 +846,25 @@ export class ExchangeSearchPanel extends LitElement {
       forceOauthEvents
     } = this;
     const material = !compatibility;
-    return html`<anypoint-signin
+    return html`
+    <anypoint-signin
       ?material="${material}"
       ?disabled="${!authInitialized}"
       class="auth-button"
       .redirectUri="${exchangeRedirectUri}"
       .clientId="${exchangeClientId}"
       scopes="read:exchange"
-      @signedinchange="${this._signedInHandler}"
-      @accesstokenchange="${this._atHandler}"
+      @signedinchange="${this[signedInHandler]}"
+      @accesstokenchange="${this[accessTokenHandler]}"
       ?forceOauthEvents="${forceOauthEvents}"
       width="wide"
     ></anypoint-signin>`;
   }
 
-  _searchTemplate() {
+  /**
+   * @returns {TemplateResult} The template for the search input
+   */
+  [searchTemplate]() {
     const {
       compatibility,
       outlined,
@@ -805,10 +878,10 @@ export class ExchangeSearchPanel extends LitElement {
         ?outlined="${outlined}"
         type="search"
         .value="${query}"
-        @value-changed="${this._queryHandler}"
         aria-label="Search Anypoint Exchange"
-        @keydown="${this._searchKeydown}"
-        @search="${this._searchHandler}"
+        @input="${this[queryInputHandler]}"
+        @keydown="${this[queryKeydownHandler]}"
+        @search="${this[querySearchHandler]}"
       >
         <label slot="label">Search Anypoint Exchange</label>
         <anypoint-icon-button
@@ -823,7 +896,10 @@ export class ExchangeSearchPanel extends LitElement {
     `;
   }
 
-  _busyTemplate() {
+  /**
+   * @returns {TemplateResult|string} The template for the loader
+   */
+  [busyTemplate]() {
     const { querying, authInitialized } = this;
     if (!authInitialized) {
       return html`<div class="connecting-info">
@@ -837,18 +913,31 @@ export class ExchangeSearchPanel extends LitElement {
     return '';
   }
 
-  _emptyTemplate() {
+  /**
+   * @returns {TemplateResult} The template for the empty search result
+   */
+  [emptyTemplate]() {
     return html`<p class="empty-info">Couldn't find requested API.</p>`;
   }
 
-  _listTemplate() {
-    const { listView, compatibility, renderLoadMore, items = [] } = this;
+  /**
+   * @returns {TemplateResult} The template for the results list
+   */
+  [listTemplate]() {
+    const { listView, renderLoadMore, items = [] } = this;
+    const listStyles = /** @type StyleInfo */ ({
+      gridTemplateColumns: listView ? '' : `repeat(${this[columnsValue]}, 1fr)`,
+    });
+    const classes = {
+      list: true,
+      grid: !listView,
+    }
     return html`
-    <div class="list-wrapper" @scroll="${this._onScroll}">
-    <section class="list" ?data-list="${listView}">
-    ${items.map((item, index) => this._renderItem(listView, item, index, compatibility))}
-    </section>
-    ${renderLoadMore ? html`<div class="load-more">
+    <div class="list-wrapper" @scroll="${this[scrollHandler]}">
+      <section class="${classMap(classes)}" style="${styleMap(listStyles)}">
+      ${items.map((item, index) => this[renderItem](listView, item, index))}
+      </section>
+      ${renderLoadMore ? html`<div class="load-more">
         <anypoint-button
           emphasis="medium"
           class="action-button"
@@ -863,48 +952,105 @@ export class ExchangeSearchPanel extends LitElement {
    * @param {boolean} listView
    * @param {ExchangeAsset} item
    * @param {number} index
-   * @param {boolean} compatibility
    * @returns {TemplateResult} 
    */
-  _renderItem(listView, item, index, compatibility) {
-    return listView ?
-      this._renderListItem(item, index, compatibility) :
-      this._renderGridItem(item, index, compatibility);
+  [renderItem](listView, item, index) {
+    return listView ? this[renderListItem](item, index) : this[renderGridItem](item, index);
   }
 
   /**
    * @param {ExchangeAsset} item
    * @param {number} index
-   * @param {boolean} compatibility
    * @returns {TemplateResult} 
    */
-  _renderListItem(item, index, compatibility) {
-    const { actionLabel } = this;
-    return html`
-    <exchange-search-list-item
-      data-index="${index}"
-      .item="${item}"
-      ?compatibility="${compatibility}"
-      @action="${this._processItem}"
-      .actionLabel="${actionLabel}"
-    ></exchange-search-list-item>`;
+  [renderListItem](item, index) {
+    return html`<anypoint-icon-item class="list-item">
+      ${this[itemIconTemplate](item)}
+      <anypoint-item-body twoline>
+        <div class="top-line">
+          <div class="name">${item.name}</div>
+          ${this[ratingTemplate](item)}
+        </div>
+        <div secondary class="details">
+          <p class="meta creator">by ${item.organization.name}</p>
+        </div>
+      </anypoint-item-body>
+      ${this[actionButtonTemplate](index)}
+    </anypoint-icon-item>`;
   }
 
   /**
    * @param {ExchangeAsset} item
    * @param {number} index
-   * @param {boolean} compatibility
    * @returns {TemplateResult} 
    */
-  _renderGridItem(item, index, compatibility) {
-    const { actionLabel } = this;
+  [renderGridItem](item, index) {
+    const { organization={} } = item;
     return html`
-    <exchange-search-grid-item
-      data-index="${index}"
-      .item="${item}"
+    <div class="card grid-item">
+      <section class="content">
+        <div class="title">
+          ${this[itemIconTemplate](item)}
+          <div class="name">${item.name}</div>
+        </div>
+        <p class="creator">by ${organization.name}</p>
+        <div class="rating">
+          ${this[ratingTemplate](item)}
+        </div>
+      </section>
+      <div class="actions">
+        ${this[actionButtonTemplate](index)}
+      </div>
+    </div>`;
+  }
+
+  /**
+   * @param {ExchangeAsset} item
+   * @returns {TemplateResult} Template for the rating element
+   */
+  [ratingTemplate](item) {
+    const value = item.rating || 0;
+    return html`<star-rating
+      .value="${item.rating}"
+      readonly
+      title="Api rating: ${value}/5"
+      tabindex="-1"
+    ></star-rating>`;
+  }
+
+  /**
+   * @param {ExchangeAsset} item
+   * @returns {TemplateResult} The template for the asset's icon
+   */
+  [itemIconTemplate](item) {
+    if (!item.icon) {
+      return html`<span class="default-icon thumb" slot="item-icon">${exchange}</span>`; 
+    }
+    const map = {
+      backgroundImage: `url('${item.icon}')`,
+    };
+    return html`<span
+      class="thumb"
+      slot="item-icon"
+      style="${styleMap(map)}"
+    ></span>`;
+  }
+
+  /**
+   * @param {number} index
+   * @returns {TemplateResult} Template for the action button
+   */
+  [actionButtonTemplate](index) {
+    const {
+      compatibility,
+      actionLabel
+    } = this;
+    return html`
+    <anypoint-button
       ?compatibility="${compatibility}"
-      @action="${this._processItem}"
-      .actionLabel="${actionLabel}"
-    ></exchange-search-grid-item>`;
+      data-index="${index}"
+      @click="${this[itemActionHandler]}"
+      class="open-button"
+    >${actionLabel}</anypoint-button>`;
   }
 }

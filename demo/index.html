@@ -7,21 +7,17 @@
   <title>Exchange search demo</title>
 
   <style>
-  .centered[role="main"] {
-    max-width: 100%;
-  }
-
-  body.styled .documentation-section {
-    max-width: 100%;
+  .styled [role="main"].centered {
+    max-width: 1600px
   }
 
   exchange-search-panel {
     height: 800px;
   }
 
-  anypoint-radio-button {
+  /* anypoint-radio-button {
     display: block;
-  }
+  } */
 
   body.styled {
     --primary-color: #00A2DF;
@@ -42,11 +38,13 @@
     --arc-font-body1-font-weight: 400;
     --arc-font-body1-line-height: 20px;
   }
+
   html body.styled.dark {
     background-color: #424242;
     height: 100vh;
     color: #fff;
     --exchange-search-list-item-author-color: rgba(255, 255, 255, 0.74);
+    --anypoint-input-background-color: #f5f5f5;
   }
   </style>
 </head>

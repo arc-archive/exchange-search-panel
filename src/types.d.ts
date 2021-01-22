@@ -50,3 +50,17 @@ export declare interface AssetOrganization {
   subOrganizationIds: string[];
   tenantOrganizationIds: string[];
 }
+
+export declare interface MediaQueryInfo {
+  query: string;
+  value: number;
+}
+
+export declare interface MediaQueryResult extends MediaQueryInfo {
+  matches: boolean;
+}
+
+export declare interface MediaQueryItem {
+  mq: MediaQueryList;
+  listener: (e: MediaQueryListEvent) => any;
+}
