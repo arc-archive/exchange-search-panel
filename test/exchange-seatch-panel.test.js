@@ -1,46 +1,54 @@
 import { fixture, assert, html, nextFrame } from '@open-wc/testing';
-import * as sinon from 'sinon/pkg/sinon-esm.js';
+import sinon from 'sinon';
+import { AuthorizationEventTypes } from '@advanced-rest-client/arc-events';
 import { ExchangeServer } from './exchange-server-helper.js';
 import '../exchange-search-panel.js';
+import { 
+  queryingValue, enableList, enableGrid, exchangeResponse, typeChanged, 
+  columnsValue, oauthCallback, setupAuthHeaders, listenOauth, unlistenOauth,
+} from '../src/ExchangeSearchPanelElement.js';
+
+/** @typedef {import('../').ExchangeSearchPanelElement} ExchangeSearchPanelElement */
 
 describe('<exchange-search-panel>', () => {
+  /**
+   * @returns {Promise<ExchangeSearchPanelElement>} 
+   */
   async function basicFixture() {
-    return await fixture(`<exchange-search-panel></exchange-search-panel>`);
+    return fixture(html`<exchange-search-panel></exchange-search-panel>`);
   }
 
+  /**
+   * @returns {Promise<ExchangeSearchPanelElement>} 
+   */
   async function authFixture() {
-    return await fixture(html`<exchange-search-panel
-      anypointauth
-      exchangeredirecturi="https://domain.com"
-      exchangeclientid="test1234"
-      forceoauthevents></exchange-search-panel>`);
+    return fixture(html`<exchange-search-panel
+      anypointAuth
+      exchangeRedirectUri="https://domain.com"
+      exchangeClientId="test1234"
+      forceOauthEvents></exchange-search-panel>`);
   }
 
+  /**
+   * @returns {Promise<ExchangeSearchPanelElement>} 
+   */
   async function noAutoFixture() {
-    return await fixture(html`<exchange-search-panel
-      noauto></exchange-search-panel>`);
+    return fixture(html`<exchange-search-panel
+      noAuto></exchange-search-panel>`);
   }
-
-  // async function noAutoAuthFixture() {
-  //   return await fixture(html`<exchange-search-panel
-  //     noauto
-  //     anypointauth
-  //     exchangeredirecturi="https://domain.com"
-  //     exchangeclientid="test1234"></exchange-search-panel>`);
-  // }
 
   async function untilLoaded(element) {
     return new Promise((resolve) => {
-      element.addEventListener('querying-changed', function clb(e) {
-        if (e.detail.value === false) {
-          element.removeEventListener('querying-changed', clb);
+      element.addEventListener('queryingchange', function clb(e) {
+        if (e.target.querying === false) {
+          element.removeEventListener('queryingchange', clb);
           resolve();
         }
       });
     });
   }
 
-  describe('basic with auto opened', function() {
+  describe('basic with auto opened', () => {
     beforeEach(() => {
       ExchangeServer.createServer();
     });
@@ -49,29 +57,29 @@ describe('<exchange-search-panel>', () => {
       ExchangeServer.restore();
     });
 
-    describe('basic when auto querying', function() {
-      let element;
+    describe('basic when auto querying', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('dataUnavailable is computed', function() {
+      it('dataUnavailable is computed', () => {
         assert.isFalse(element.dataUnavailable);
       });
 
-      it('hasItems is false', function() {
+      it('hasItems is false', () => {
         assert.isFalse(element.hasItems);
       });
 
-      it('query is undefined', function() {
+      it('query is undefined', () => {
         assert.isUndefined(element.query, '');
       });
 
-      it('noMoreResults is false by default', function() {
+      it('noMoreResults is false by default', () => {
         assert.isFalse(element.noMoreResults);
       });
 
-      it('queryParams is computed', function() {
+      it('queryParams is computed', () => {
         const p = element.queryParams;
         assert.typeOf(p, 'object');
         assert.deepEqual(p.types, ['rest-api'], 'types is set');
@@ -80,7 +88,7 @@ describe('<exchange-search-panel>', () => {
         assert.isUndefined(p.search, 'search is undefined');
       });
 
-      it('queryParams is computed with search', function() {
+      it('queryParams is computed with search', () => {
         element.query = 'test';
         const p = element.queryParams;
         assert.typeOf(p, 'object');
@@ -90,121 +98,122 @@ describe('<exchange-search-panel>', () => {
         assert.equal(p.search, element.query, 'search is set');
       });
 
-      it('renderLoadMore is false', function() {
+      it('renderLoadMore is false', () => {
         assert.isFalse(element.renderLoadMore);
       });
     });
 
-    describe('basic with data loaded', function() {
-      let element;
+    describe('basic with data loaded', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
         await untilLoaded(element);
       });
 
-      it('querying is false', function() {
+      it('querying is false', () => {
         assert.isFalse(element.querying);
       });
 
-      it('dataUnavailable is computed', function() {
+      it('dataUnavailable is computed', () => {
         assert.isFalse(element.dataUnavailable);
       });
 
-      it('items is set', function() {
+      it('items is set', () => {
         assert.typeOf(element.items, 'array', 'items is an array');
         assert.lengthOf(element.items, 5, 'items contains one page of results');
       });
 
-      it('exchangeOffset is moved by number of items on the list', function() {
+      it('exchangeOffset is moved by number of items on the list', () => {
         assert.equal(element.exchangeOffset, 5);
       });
 
-      it('noMoreResults is true when less than offset', function() {
+      it('noMoreResults is true when less than offset', () => {
         assert.isTrue(element.noMoreResults);
       });
 
-      it('renderLoadMore is false when not querying and no more results', function() {
+      it('renderLoadMore is false when not querying and no more results', () => {
         assert.isFalse(element.renderLoadMore);
       });
     });
 
-    describe('reset()', function() {
-      let element;
+    describe('reset()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
+        // @ts-ignore
         element.items = [{ name: 'test' }];
         element.exchangeOffset = 20;
         element.noMoreResults = true;
-        element._querying = true;
+        element[queryingValue] = true;
         element.reset();
       });
 
-      it('Resets the items', function() {
+      it('Resets the items', () => {
         assert.typeOf(element.items, 'array', 'items is an array');
         assert.lengthOf(element.items, 0, 'items is empty');
       });
 
-      it('Resets exchangeOffset', function() {
+      it('Resets exchangeOffset', () => {
         assert.equal(element.exchangeOffset, 0);
       });
 
-      it('Resets noMoreResults', function() {
+      it('Resets noMoreResults', () => {
         assert.isFalse(element.noMoreResults);
       });
 
-      it('Resets querying', function() {
+      it('Resets querying', () => {
         assert.isFalse(element.querying);
       });
     });
 
-    describe('_enableList()', function() {
-      let element;
+    describe('[enableList]()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
         await untilLoaded(element);
       });
 
-      it('Sets listView to true', function() {
-        element._enableList();
+      it('Sets listView to true', () => {
+        element[enableList]();
         assert.isTrue(element.listView);
       });
 
       it('Renders list items', async () => {
-        element._enableList();
+        element[enableList]();
         await nextFrame();
-        const item = element.shadowRoot.querySelector('exchange-search-list-item');
+        const item = element.shadowRoot.querySelector('.list-item');
         assert.isOk(item);
       });
     });
 
-    describe('_enableGrid()', function() {
-      let element;
+    describe('[enableGrid]()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
         element.listView = true;
         await untilLoaded(element);
       });
 
-      it('Sets listView to false', function() {
-        element._enableGrid();
+      it('Sets listView to false', () => {
+        element[enableGrid]();
         assert.isFalse(element.listView);
       });
 
       it('Renders grid items', async () => {
-        element._enableGrid();
+        element[enableGrid]();
         await nextFrame();
-        const item = element.shadowRoot.querySelector('exchange-search-grid-item');
+        const item = element.shadowRoot.querySelector('.grid-item');
         assert.isOk(item);
       });
     });
 
-    describe('updateSearch()', function() {
-      let element;
+    describe('updateSearch()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Calls reset function', function() {
+      it('Calls reset function', () => {
         const stub = sinon.stub(element, 'reset');
         element.updateSearch();
         assert.isTrue(stub.called);
@@ -219,45 +228,44 @@ describe('<exchange-search-panel>', () => {
       });
     });
 
-    describe('#dataUnavailable', function() {
-      let element;
+    describe('#dataUnavailable', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Returns true when both arguments are falsy', function() {
-        // element._hasItems = false;
-        element._querying = false;
+      it('Returns true when both arguments are falsy', () => {
+        element[queryingValue] = false;
         assert.isTrue(element.dataUnavailable);
       });
 
-      it('Returns false when querying', function() {
-        // element._hasItems = false;
-        element._querying = true;
+      it('Returns false when querying', () => {
+        element[queryingValue] = true;
         assert.isFalse(element.dataUnavailable);
       });
 
-      it('Returns false when has items', function() {
+      it('Returns false when has items', () => {
+        // @ts-ignore
         element.items = [{}];
-        element._querying = false;
+        element[queryingValue] = false;
         assert.isFalse(element.dataUnavailable);
       });
     });
 
-    describe('queryCurrent()', function() {
-      let element;
+    describe('queryCurrent()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Sets querying to true', function() {
+      it('Sets querying to true', () => {
         element.queryCurrent();
         assert.isTrue(element.querying);
       });
     });
 
-    describe('_exchangeResponse()', function() {
-      let element;
+    describe('[exchangeResponse]()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       let emptyResponse;
       let dataResponse;
       beforeEach(async () => {
@@ -279,71 +287,71 @@ describe('<exchange-search-panel>', () => {
         };
       });
 
-      it('Sets noMoreResults when no data', function() {
-        element._exchangeResponse(emptyResponse);
+      it('Sets noMoreResults when no data', () => {
+        element[exchangeResponse](emptyResponse);
         assert.isTrue(element.noMoreResults);
       });
 
-      it('Sets querying to false when no data', function() {
-        element._querying = (true);
-        element._exchangeResponse(emptyResponse);
+      it('Sets querying to false when no data', () => {
+        element[queryingValue] = true;
+        element[exchangeResponse](emptyResponse);
         assert.isFalse(element.querying);
       });
 
-      it('Sets noMoreResults when data size is less than exchangeLimit', function() {
-        element._exchangeResponse(dataResponse);
+      it('Sets noMoreResults when data size is less than exchangeLimit', () => {
+        element[exchangeResponse](dataResponse);
         assert.isTrue(element.noMoreResults);
       });
 
-      it('Do not sets noMoreResults when within exchangeLimit', function() {
+      it('Do not sets noMoreResults when within exchangeLimit', () => {
         element.exchangeLimit = 4;
-        element._exchangeResponse(dataResponse);
+        element[exchangeResponse](dataResponse);
         assert.isFalse(element.noMoreResults);
       });
 
-      it('Sets items property', function() {
-        element._exchangeResponse(dataResponse);
+      it('Sets items property', () => {
+        element[exchangeResponse](dataResponse);
         assert.typeOf(element.items, 'array');
         assert.lengthOf(element.items, 4);
       });
 
-      it('Sets exchangeOffset to size of array', function() {
+      it('Sets exchangeOffset to size of array', () => {
         assert.equal(element.exchangeOffset, 0);
-        element._exchangeResponse(dataResponse);
+        element[exchangeResponse](dataResponse);
         assert.equal(element.exchangeOffset, 4);
-        element._exchangeResponse(dataResponse);
+        element[exchangeResponse](dataResponse);
         assert.equal(element.exchangeOffset, 8);
       });
 
-      it('Sets querying to false', function() {
-        element._querying = (true);
-        element._exchangeResponse(dataResponse);
+      it('Sets querying to false', () => {
+        element[queryingValue] = true;
+        element[exchangeResponse](dataResponse);
         assert.isFalse(element.querying);
       });
     });
 
-    describe('#queryParams', function() {
-      let element;
+    describe('#queryParams', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Sets required properties', function() {
+      it('Sets required properties', () => {
         element.type = 'a';
-        element.exchangeLimit = 'b';
-        element.exchangeOffset = 'c';
+        element.exchangeLimit = 1;
+        element.exchangeOffset = 2;
 
         const result = element.queryParams;
         assert.equal(result.types, 'a');
-        assert.equal(result.limit, 'b');
-        assert.equal(result.offset, 'c');
+        assert.equal(result.limit, 1);
+        assert.equal(result.offset, 2);
         assert.isUndefined(result.search);
       });
 
-      it('Sets search if not empty', function() {
+      it('Sets search if not empty', () => {
         element.type = 'a';
-        element.exchangeLimit = 'b';
-        element.exchangeOffset = 'c';
+        element.exchangeLimit = 1;
+        element.exchangeOffset = 2;
         element.query = 'd';
 
         const result = element.queryParams;
@@ -351,42 +359,37 @@ describe('<exchange-search-panel>', () => {
       });
     });
 
-    describe('_getTypes()', function() {
-      let element;
+    describe('#types()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Returns array if empty argument', function() {
-        const result = element._getTypes();
+      it('returns empty array when no type', () => {
+        element.type = '';
+        const result = element.types;
         assert.typeOf(result, 'array');
         assert.lengthOf(result, 0);
       });
 
-      it('Returns the same array as an argument', function() {
-        const arg = ['test'];
-        const result = element._getTypes(arg);
-        assert.isTrue(result === arg);
-      });
-
-      it('Returns single type', function() {
-        const arg = 'test';
-        const result = element._getTypes(arg);
+      it('returns a single type', () => {
+        element.type = 'test';
+        const result = element.types;
         assert.lengthOf(result, 1);
         assert.equal(result[0], 'test');
       });
 
-      it('Returns multiple types', function() {
-        const arg = 'rest-api,template';
-        const result = element._getTypes(arg);
+      it('Returns multiple types', () => {
+        element.type = 'rest-api,template';
+        const result = element.types;
         assert.lengthOf(result, 2);
         assert.equal(result[0], 'rest-api');
         assert.equal(result[1], 'template');
       });
 
-      it('Trim types', function() {
-        const arg = ' rest-api , template , connector ';
-        const result = element._getTypes(arg);
+      it('Trim types', () => {
+        element.type = ' rest-api , template , connector ';
+        const result = element.types;
         assert.lengthOf(result, 3);
         assert.equal(result[0], 'rest-api');
         assert.equal(result[1], 'template');
@@ -394,58 +397,77 @@ describe('<exchange-search-panel>', () => {
       });
     });
 
-    describe('_processItem()', function() {
-      let element;
+    describe('[itemActionHandler]()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
         await untilLoaded(element);
       });
 
-      it('Dispatches process-exchange-asset-data event', function(done) {
+      it('dispatches the selected event', () => {
+        const spy = sinon.spy();
+        element.addEventListener('selected', spy);
+        const item = /** @type HTMLElement */ (element.shadowRoot.querySelector('.open-button'));
+        item.click();
+        assert.isTrue(spy.called, 'dispatches selected event');
+      });
+
+      it('has the asset item on the event', () => {
+        const spy = sinon.spy();
+        element.addEventListener('selected', spy);
+        const item = /** @type HTMLElement */ (element.shadowRoot.querySelector('.open-button'));
+        item.click();
         const model = element.items[0];
-        element.addEventListener('process-exchange-asset-data', function clb(e) {
-          element.removeEventListener('process-exchange-asset-data', clb);
-          assert.deepEqual(e.detail, model);
-          done();
-        });
-        const item = element.shadowRoot.querySelector('exchange-search-grid-item');
-        item.requestAction();
+        assert.deepEqual(spy.args[0][0].detail, model);
       });
     });
 
-    describe('Authorization properties', function() {
-      let element;
+    describe('Authorization properties', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await authFixture();
       });
 
-      it('accessToken is not set', function() {
-        assert.notOk(element.accessToken);
+      let handler;
+      before(() => {
+        handler = (e) => {
+          e.detail.result = Promise.resolve({
+            accessToken: 'test-token',
+          });
+        };
+        window.addEventListener(AuthorizationEventTypes.OAuth2.authorize, handler)
       });
 
-      it('Renders authorization button', function() {
+      after(() => {
+        window.removeEventListener(AuthorizationEventTypes.OAuth2.authorize, handler)
+      });
+
+      it('renders the authorization button', () => {
         const button = element.shadowRoot.querySelector('.auth-button');
         assert.ok(button, 'Button is in the DOM');
-        const display = getComputedStyle(button).display;
+        const { display } = getComputedStyle(button);
         assert.notEqual(display, 'none');
       });
 
-      it('Sets up auth headers', function() {
+      it('sets up auth headers', async () => {
         element.accessToken = 'test';
-        const headers = element._query.headers;
+        await nextFrame();
+        const ajax = element.shadowRoot.querySelector('iron-ajax');
+        const { headers } = ajax;
+        // @ts-ignore
         assert.equal(headers.authorization, 'Bearer test');
       });
     });
 
-    describe('#_effectivePanelTitle', () => {
-      let element;
+    describe('#effectivePanelTitle', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
       it('Returns predefined title', () => {
         element.panelTitle = 'test-title';
-        assert.equal(element._effectivePanelTitle, 'test-title');
+        assert.equal(element.effectivePanelTitle, 'test-title');
       });
 
       [
@@ -458,100 +480,77 @@ describe('<exchange-search-panel>', () => {
         ['custom', 'Explore custom assets'],
         ['template,custom', 'Explore Exchange assets']
       ].forEach(([type, title]) => {
-        it('Returns title for ' + type, () => {
+        it(`Returns title for ${type}`, () => {
           element.type = type;
-          assert.equal(element._effectivePanelTitle, title);
+          assert.equal(element.effectivePanelTitle, title);
         });
       });
     });
 
-    describe('_typeChanged()', () => {
-      let element;
+    describe('[typeChanged]()', () => {
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
       });
 
-      it('Does nothing when initializing', () => {
+      it('calls the API endpoint when type change', () => {
         let called = false;
-        element.updateSearch = () => called = true;
-        element._typeChanged('rest-api');
-        assert.isFalse(called);
-      });
-
-      it('Calls updateSearch when type chenges', () => {
-        let called = false;
-        element.updateSearch = () => called = true;
-        element._typeChanged('rest-api', 'something');
+        element.updateSearch = async () => { called = true };
+        element[typeChanged]('rest-api');
         assert.isTrue(called);
       });
     });
 
-    describe('_computeColumns()', () => {
+    describe('[computeColumns]()', () => {
       const auto = 'auto';
-      let element;
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await basicFixture();
         element.columns = auto;
-        ['_mq2200', '_mq2000', '_mq1900', '_mq1700', '_mq1400', '_mq756', '_mq450']
-        .forEach((prop) => element[prop] = false);
       });
 
-      it('calls _columnsChanged for set columns value', () => {
+      it('sets [columnsValue] from the columns property', () => {
         element.columns = 100;
-        const spy = sinon.spy(element, '_columnsChanged');
-        element._computeColumns();
-        assert.equal(spy.args[0][0], 100);
+        assert.equal(element[columnsValue], 100);
       });
 
-      it('calls _columnsChanged with default value', () => {
-        const spy = sinon.spy(element, '_columnsChanged');
-        element._computeColumns();
-        assert.equal(spy.args[0][0], 1);
-      });
-
-      ['_mq2200', '_mq2000', '_mq1900', '_mq1700', '_mq1400', '_mq756', '_mq450']
-      .forEach((prop, index) => {
-        it(`calls _columnsChanged for ${prop}`, () => {
-          element[prop] = true;
-          const spy = sinon.spy(element, '_columnsChanged');
-          element._computeColumns();
-          assert.equal(spy.args[0][0], 8 - index);
-        });
+      it('sets [columnsValue] without setting the column property', () => {
+        assert.typeOf(element[columnsValue], 'number');
       });
     });
 
-    describe('no-auto attribute', () => {
+    describe('noAuto attribute', () => {
       beforeEach(async () => {
         ExchangeServer.createServer();
       });
 
-      after(function() {
+      after(() => {
         ExchangeServer.restore();
       });
 
-      it('Won\'t request for data when authorization is not set', async () => {
+      it('does not request for data when authorization is not set', async () => {
         await noAutoFixture();
         assert.lengthOf(ExchangeServer.srv.requests, 0);
       });
     });
 
-    describe('_oauth2SignedIn()', () => {
+    describe('[oauthCallback]()', () => {
       beforeEach(async () => {
         ExchangeServer.createServer();
       });
 
-      after(function() {
+      after(() => {
         ExchangeServer.restore();
       });
 
-      let element;
+      let element = /** @type ExchangeSearchPanelElement */ (null);
       beforeEach(async () => {
         element = await noAutoFixture();
       });
 
       it('Sets authInitialized to true', () => {
         element.authInitialized = false;
-        element._oauth2SignedIn();
+        element[oauthCallback]();
         assert.isTrue(element.authInitialized);
       });
 
@@ -559,287 +558,189 @@ describe('<exchange-search-panel>', () => {
         const spy = sinon.spy(element, 'updateSearch');
         element.noAuto = false;
         element.authInitialized = true;
-        element._oauth2SignedIn();
+        element[oauthCallback]();
         assert.isTrue(spy.called);
       });
 
-      it('Won\'t call updateSearch() when no-auto', () => {
+      it('does not call updateSearch() when no-auto', () => {
         const spy = sinon.spy(element, 'updateSearch');
-        element._oauth2SignedIn();
-        assert.isFalse(spy.called);
-      });
-    });
-
-    describe('_oauth2SignedOut()', () => {
-      beforeEach(async () => {
-        ExchangeServer.createServer();
-      });
-
-      after(function() {
-        ExchangeServer.restore();
-      });
-
-      let element;
-      beforeEach(async () => {
-        element = await noAutoFixture();
-      });
-
-      it('Sets authInitialized to true', () => {
-        element.authInitialized = false;
-        element._oauth2SignedOut();
-        assert.isTrue(element.authInitialized);
-      });
-
-      it('Calls updateSearch() when no no-auto', () => {
-        const spy = sinon.spy(element, 'updateSearch');
-        element.noAuto = false;
-        element.authInitialized = true;
-        element._oauth2SignedOut();
-        assert.isTrue(spy.called);
-      });
-
-      it('Won\'t call updateSearch() when no-auto', () => {
-        const spy = sinon.spy(element, 'updateSearch');
-        element._oauth2SignedOut();
-        assert.isFalse(spy.called);
-      });
-    });
-
-    describe('_oauth2ErrorHandler()', () => {
-      beforeEach(async () => {
-        ExchangeServer.createServer();
-      });
-
-      after(function() {
-        ExchangeServer.restore();
-      });
-
-      let element;
-      let ev;
-      beforeEach(async () => {
-        element = await noAutoFixture();
-        ev = {
-          detail: {
-            message: 'test-message'
-          }
-        };
-      });
-
-      it('Sets error mesage on error toast', () => {
-        element._oauth2ErrorHandler(ev);
-        const toast = element.shadowRoot.querySelector('#errorToast');
-        assert.equal(toast.text, 'test-message');
-      });
-
-      it('Opens the toast', () => {
-        element._oauth2ErrorHandler(ev);
-        const toast = element.shadowRoot.querySelector('#errorToast');
-        assert.isTrue(toast.opened);
-      });
-
-      it('Sets authInitialized to true', () => {
-        element.authInitialized = false;
-        element._oauth2ErrorHandler(ev);
-        assert.isTrue(element.authInitialized);
-      });
-
-      it('Calls updateSearch() when no no-auto', () => {
-        const spy = sinon.spy(element, 'updateSearch');
-        element.noAuto = false;
-        element.authInitialized = false;
-        element._oauth2ErrorHandler(ev);
-        assert.isTrue(spy.called);
-      });
-
-      it('Won\'t call updateSearch() when no-auto', () => {
-        const spy = sinon.spy(element, 'updateSearch');
-        element._oauth2ErrorHandler(ev);
-        assert.isFalse(spy.called);
-      });
-
-      it('Won\'t call updateSearch() when already initialized', () => {
-        const spy = sinon.spy(element, 'updateSearch');
-        element.noAuto = false;
-        element.authInitialized = true;
-        element._oauth2ErrorHandler(ev);
+        element[oauthCallback]();
         assert.isFalse(spy.called);
       });
     });
   });
 
-  describe('_setupAuthHeaders()', () => {
-    let element;
+  describe('[setupAuthHeaders]()', () => {
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
     });
 
-    it('Headers are empty when no token', () => {
-      element._setupAuthHeaders();
-      assert.deepEqual(element._query.headers, {});
+    it('Headers are empty when no token', async () => {
+      element[setupAuthHeaders]();
+      await nextFrame();
+      const ajax = element.shadowRoot.querySelector('iron-ajax');
+      assert.deepEqual(ajax.headers, {});
     });
 
-    it('Headers are set when token', () => {
-      element._setupAuthHeaders('test-token');
-      assert.equal(element._query.headers.authorization, 'Bearer test-token');
+    it('Headers are set when token', async () => {
+      element[setupAuthHeaders]('test-token');
+      await nextFrame();
+      const ajax = element.shadowRoot.querySelector('iron-ajax');
+      // @ts-ignore
+      assert.equal(ajax.headers.authorization, 'Bearer test-token');
     });
   });
 
-  describe('_anypointAuthChanged()', () => {
-    let element;
+  describe('[anypointAuthChanged]()', () => {
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
     });
 
-    it('Calls _listenOauth() when state is "true"', () => {
-      const spy = sinon.spy(element, '_listenOauth');
+    it('Calls [listenOauth]() when state is "true"', () => {
+      const spy = sinon.spy(element, listenOauth);
       element.anypointAuth = true;
       assert.isTrue(spy.called);
     });
 
-    it('Calls _unlistenOauth() when state is "false"', () => {
+    it('Calls [unlistenOauth]() when state is "false"', () => {
       element.anypointAuth = true;
-      const spy = sinon.spy(element, '_unlistenOauth');
+      const spy = sinon.spy(element, unlistenOauth);
       element.anypointAuth = false;
       assert.isTrue(spy.called);
     });
   });
 
-  describe('_searchHandler()', () => {
+  describe('[querySearchHandler]()', () => {
     beforeEach(async () => {
       ExchangeServer.createServer();
     });
 
-    after(function() {
+    after(() => {
       ExchangeServer.restore();
     });
 
-    let element;
-    let ev;
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
-      ev = {
-        target: {
-          value: ''
-        }
-      };
     });
 
-    it('Calls updateSearch() when no value', () => {
-      ev.target.value = 'value';
+    it('calls updateSearch() when no value', () => {
+      const input = element.shadowRoot.querySelector('anypoint-input');
+      input.value = 'value';
       const spy = sinon.spy(element, 'updateSearch');
-      element._searchHandler(ev);
+      input.dispatchEvent(new Event('search'));
       assert.isFalse(spy.called);
     });
 
     it('Won\'t call updateSearch() when input has value', () => {
+      const input = element.shadowRoot.querySelector('anypoint-input');
       const spy = sinon.spy(element, 'updateSearch');
-      element._searchHandler(ev);
+      input.dispatchEvent(new Event('search'));
       assert.isTrue(spy.called);
     });
   });
 
-  describe('_searchKeydown()', () => {
+  describe('[queryKeydownHandler]()', () => {
     beforeEach(async () => {
       ExchangeServer.createServer();
     });
 
-    after(function() {
+    after(() => {
       ExchangeServer.restore();
     });
 
-    let element;
-    let ev;
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
-      ev = new CustomEvent('keydown', {
-        cancelable: true
-      });
     });
 
-    it('Won\'t call updateSearch() when no key value/keyCode', () => {
+    it('does not call updateSearch() when no key is not Enter', () => {
       const spy = sinon.spy(element, 'updateSearch');
-      element._searchKeydown(ev);
+      const input = element.shadowRoot.querySelector('anypoint-input');
+      input.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape',
+      }));
       assert.isFalse(spy.called);
     });
 
-    it('Calls updateSearch() when key is Enter', () => {
-      ev.key = 'Enter';
+    it('calls updateSearch() when key is Enter', () => {
       const spy = sinon.spy(element, 'updateSearch');
-      element._searchKeydown(ev);
+      const input = element.shadowRoot.querySelector('anypoint-input');
+      input.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Enter',
+      }));
       assert.isTrue(spy.called);
-    });
-
-    it('Calls updateSearch() when keyCode is 13', () => {
-      ev.keyCode = 13;
-      const spy = sinon.spy(element, 'updateSearch');
-      element._searchKeydown(ev);
-      assert.isTrue(spy.called);
-    });
-
-    it('Calls updateSearch() when which is 13', () => {
-      ev.which = 13;
-      const spy = sinon.spy(element, 'updateSearch');
-      element._searchKeydown(ev);
-      assert.isTrue(spy.called);
-    });
-
-    it('Event is cancelled', () => {
-      ev.which = 13;
-      element._searchKeydown(ev);
-      assert.isTrue(ev.defaultPrevented);
     });
   });
 
-  describe('_exchangeResponseError()', () => {
-    let element;
-    let ev;
+  describe('[exchangeResponseError]()', () => {
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
-      ev = new CustomEvent('error', {
-        cancelable: true,
+      await nextFrame();
+    });
+
+    it('resets querying', () => {
+      const ajax = element.shadowRoot.querySelector('iron-ajax');
+      ajax.dispatchEvent(new CustomEvent('error', {
         detail: {
           request: {
             status: 200
           }
         }
-      });
-      await nextFrame();
-    });
-
-    it('Re-sets querying', () => {
-      element._exchangeResponseError(ev);
+      }));
       assert.isFalse(element.querying);
     });
 
-    it('Query error is opened', () => {
-      element._exchangeResponseError(ev);
-      const toast = element.shadowRoot.querySelector('#errorToast');
-      assert.isTrue(toast.opened);
-      assert.equal(toast.text, 'Unable to get data from Exchange.');
-    });
-
-    it('Status 401 - not signed in', () => {
-      ev.detail.request.status = 401;
+    it('clears accessToken when status is 401', () => {
       element.accessToken = 'test';
-      element._exchangeResponseError(ev);
+      const ajax = element.shadowRoot.querySelector('iron-ajax');
+      ajax.dispatchEvent(new CustomEvent('error', {
+        detail: {
+          request: {
+            status: 401
+          }
+        }
+      }));
       assert.equal(element.accessToken, 'test');
     });
 
-    it('Status 401 - signed in', () => {
-      ev.detail.request.status = 401;
+    it('clears signedIn property when status is 401', async () => {
       element.accessToken = 'test';
-      element.signedIn = 'test';
+      element.signedIn = true;
+      await nextFrame();
+      const ajax = element.shadowRoot.querySelector('iron-ajax');
+      ajax.dispatchEvent(new CustomEvent('error', {
+        detail: {
+          request: {
+            status: 401
+          }
+        }
+      }));
+      assert.isFalse(element.signedIn);
+    });
+
+    it('dispatches tokenexpired when status is 401', () => {
+      element.accessToken = 'test';
+      element.signedIn = true;
       const spy = sinon.spy();
       element.addEventListener('tokenexpired', spy);
-      element._exchangeResponseError(ev);
+      const ajax = element.shadowRoot.querySelector('iron-ajax');
+      ajax.dispatchEvent(new CustomEvent('error', {
+        detail: {
+          request: {
+            status: 401
+          }
+        }
+      }));
       assert.isTrue(spy.called);
-      assert.isUndefined(element.accessToken);
-      assert.isFalse(element.signedIn);
     });
   });
 
-  describe('_enableGrid()', () => {
-    let element;
+  describe('[enableGrid]()', () => {
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
       await nextFrame();
@@ -847,21 +748,23 @@ describe('<exchange-search-panel>', () => {
 
     it('Sets listView false', () => {
       element.listView = true;
-      element._enableGrid();
+      element[enableGrid]();
       assert.isFalse(element.listView);
     });
 
     it('deactivates list button', () => {
       const toggle = element.shadowRoot.querySelector('[data-action="list-enable"]');
       element.listView = false;
+      // @ts-ignore
       toggle.active = true;
-      element._enableGrid();
+      element[enableGrid]();
+      // @ts-ignore
       assert.isFalse(toggle.active);
     });
   });
 
-  describe('_enableList()', () => {
-    let element;
+  describe('[enableList]()', () => {
+    let element = /** @type ExchangeSearchPanelElement */ (null);
     beforeEach(async () => {
       element = await noAutoFixture();
       await nextFrame();
@@ -869,15 +772,17 @@ describe('<exchange-search-panel>', () => {
 
     it('Sets listView true', () => {
       element.listView = false;
-      element._enableList();
+      element[enableList]();
       assert.isTrue(element.listView);
     });
 
     it('Activates grid toggle button', () => {
       const toggle = element.shadowRoot.querySelector('[data-action="grid-enable"]');
       element.listView = true;
+      // @ts-ignore
       toggle.active = true;
-      element._enableList();
+      element[enableList]();
+      // @ts-ignore
       assert.isFalse(toggle.active);
     });
   });
