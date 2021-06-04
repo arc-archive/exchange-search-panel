@@ -971,7 +971,7 @@ export class ExchangeSearchPanelElement extends LitElement {
           <div class="name">${item.name}</div>
           ${this[ratingTemplate](item)}
         </div>
-        <div secondary class="details">
+        <div data-secondary class="details">
           <p class="meta creator">by ${item.organization.name}</p>
         </div>
       </anypoint-item-body>
@@ -985,7 +985,8 @@ export class ExchangeSearchPanelElement extends LitElement {
    * @returns {TemplateResult} 
    */
   [renderGridItem](item, index) {
-    const { organization={} } = item;
+    const { organization } = item;
+    const orgName = organization && organization.name;
     return html`
     <div class="card grid-item">
       <section class="content">
@@ -993,7 +994,7 @@ export class ExchangeSearchPanelElement extends LitElement {
           ${this[itemIconTemplate](item)}
           <div class="name">${item.name}</div>
         </div>
-        <p class="creator">by ${organization.name}</p>
+        <p class="creator">by ${orgName}</p>
         <div class="rating">
           ${this[ratingTemplate](item)}
         </div>

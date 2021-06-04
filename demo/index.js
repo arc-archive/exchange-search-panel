@@ -4,7 +4,7 @@ import '@anypoint-web-components/anypoint-checkbox/anypoint-checkbox.js';
 import '@anypoint-web-components/anypoint-radio-button/anypoint-radio-button.js';
 import '@anypoint-web-components/anypoint-radio-button/anypoint-radio-group.js';
 import '@advanced-rest-client/arc-demo-helper/arc-interactive-demo.js';
-import '@advanced-rest-client/oauth-authorization/oauth2-authorization.js';
+import '@advanced-rest-client/authorization/oauth2-authorization.js';
 import '../exchange-search-panel.js';
 
 class ComponentDemoPage extends DemoPage {
