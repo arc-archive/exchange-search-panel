@@ -24,7 +24,7 @@ h2 {
   display: none !important;
 }
 
-paper-progress {
+progress {
   width: 100%;
 }
 
@@ -32,11 +32,6 @@ anypoint-icon-button.toggle-view {
   border-radius: 50%;
   min-width: 40px;
   min-height: 40px;
-}
-
-.error-toast {
-  background-color: var(--warning-primary-color, #FF7043);
-  color: var(--warning-contrast-color, #fff);
 }
 
 .empty-info {
@@ -55,7 +50,7 @@ anypoint-icon-button.toggle-view {
   align-items: center;
 }
 
-.search-bar paper-input-container {
+.search-bar anypoint-input {
   flex: 1;
 }
 
@@ -70,25 +65,18 @@ anypoint-icon-button.toggle-view {
 
 .list {
   color: inherit;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  flex: 1;
 }
 
-.list[data-list] {
+.list.grid {
+  display: grid;
+  column-gap: 8px;
+  row-gap: 8px;
+}
+
+.list:not(.grid) {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-}
-
-exchange-search-grid-item {
-  width: calc(var(--exchange-search-grid-item-computed-width, 25%) - 16px);
-  margin: 8px;
-}
-
-.paper-item {
-  cursor: pointer;
 }
 
 .load-more {
@@ -118,4 +106,88 @@ exchange-search-grid-item {
   width: 24px;
   height: 24px;
   fill: currentColor;
-}`;
+}
+
+.card {
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border: 1px #e5e5e5 solid;
+  border-radius: 3px;
+}
+
+.name {
+  font-size: var(--arc-font-subhead-font-size);
+  font-weight: var(--arc-font-subhead-font-weight);
+  line-height: var(--arc-font-subhead-line-height);
+  padding: 0;
+  margin: 0;
+}
+
+.list-item .name {
+  display: inline-block;
+  margin-right: 16px;
+  -webkit-margin-before: 0.35em;
+}
+
+.title {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.card .content {
+  flex: 1;
+}
+
+.creator {
+  color: var(--exchange-search-list-item-author-color, rgba(0, 0, 0, 0.64));
+}
+
+star-rating {
+  display: inline-block;
+}
+
+.thumb {
+  display: block;
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  margin-right: 8px;
+  background-size: cover;
+}
+
+.default-icon {
+  fill: currentColor;
+}
+
+.list-item .thumb {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.meta {
+  margin: 0;
+  padding: 0;
+  margin-right: 12px;
+}
+
+.details {
+  display: flex;
+  flex-direction: row;
+}
+
+.top-line {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.list-item,
+.grid-item {
+  color: var(--exchange-search-panel-item-card-color, inherit);
+  background-color: var(--exchange-search-panel-item-background-color, inherit);
+}
+`;
