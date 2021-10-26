@@ -1,4 +1,8 @@
-# exchange-search-panel
+# Deprecated
+
+This component is deprecated. Use `@advanced-rest-client/anypoint` instead.
+
+----------------
 
 An element that renders an UI to search Anypoint Exchange for available assets.
 

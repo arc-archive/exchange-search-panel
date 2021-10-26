@@ -73,6 +73,7 @@ export declare const actionButtonTemplate: unique symbol;
  * 
  * @fires queryingchange
  * @fires selected
+ * @deprecated Use `@advanced-rest-client/anypoint` instead.
  */
 export class ExchangeSearchPanelElement extends LitElement {
   static get styles(): CSSResult;
